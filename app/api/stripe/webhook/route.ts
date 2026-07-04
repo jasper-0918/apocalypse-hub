@@ -26,9 +26,20 @@ export async function POST(req: NextRequest) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object;
-      const { userId, plan } = session.metadata || {};
+      const { userId, plan, type } = session.metadata || {};
 
-      if (userId && plan) {
+      if (userId && type === 'slots') {
+        // One-time +50 slot pack: increment the user's purchased packs.
+        const { data: u } = await supabase
+          .from('users')
+          .select('extra_slot_packs')
+          .eq('id', userId)
+          .single();
+        await supabase
+          .from('users')
+          .update({ extra_slot_packs: (u?.extra_slot_packs ?? 0) + 1 })
+          .eq('id', userId);
+      } else if (userId && plan) {
         await supabase
           .from('users')
           .update({
@@ -54,9 +65,7 @@ export async function POST(req: NextRequest) {
       const priceId = subscription.items.data[0]?.price?.id;
 
       const planEntry = Object.entries({
-        PRO: process.env.STRIPE_PRO_PRICE_ID,
         SCRIPTER: process.env.STRIPE_SCRIPTER_PRICE_ID,
-        DEVELOPER: process.env.STRIPE_DEVELOPER_PRICE_ID,
       }).find(([, id]) => id === priceId);
 
       if (planEntry) {

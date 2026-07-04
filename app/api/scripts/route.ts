@@ -4,7 +4,7 @@ import { getUserFromRequest } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
 import { createHash } from 'crypto';
 import { obfuscateLua, generateLoadstringSnippet } from '@/lib/obfuscator';
-import { PLAN_LIMITS } from '@/lib/stripe';
+import { effectiveScriptLimit } from '@/lib/stripe';
 import { scriptUploadSchema } from '@/lib/validators';
 
 export async function POST(req: NextRequest) {
@@ -14,19 +14,13 @@ export async function POST(req: NextRequest) {
   const supabase = createServerClient();
   const { data: dbUser } = await supabase
     .from('users')
-    .select('plan')
+    .select('plan, extra_slot_packs')
     .eq('id', user.id)
     .single();
 
   if (!dbUser) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-  const limit = PLAN_LIMITS[dbUser.plan] ?? 0;
-  if (limit === 0) {
-    return NextResponse.json(
-      { error: 'Free accounts cannot store scripts. Upgrade to Pro or higher.' },
-      { status: 403 }
-    );
-  }
+  const limit = effectiveScriptLimit(dbUser.plan, dbUser.extra_slot_packs ?? 0);
 
   const { count: scriptCount } = await supabase
     .from('scripts')
@@ -34,8 +28,12 @@ export async function POST(req: NextRequest) {
     .eq('owner_id', user.id);
 
   if ((scriptCount ?? 0) >= limit) {
+    const upsell =
+      dbUser.plan === 'SCRIPTER'
+        ? 'Buy another +50 slot pack to upload more.'
+        : 'Upgrade to Scripter (50 scripts) to upload more.';
     return NextResponse.json(
-      { error: `Your ${dbUser.plan} plan allows a maximum of ${limit} scripts.` },
+      { error: `You've reached your limit of ${limit} scripts. ${upsell}` },
       { status: 403 }
     );
   }

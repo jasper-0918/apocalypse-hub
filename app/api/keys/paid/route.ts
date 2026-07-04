@@ -4,7 +4,7 @@ import { getUserFromRequest } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
 import { generateKeyValue } from '@/lib/keygen';
 
-const PAID_PLANS = ['PRO', 'SCRIPTER', 'DEVELOPER'];
+const PAID_PLANS = ['SCRIPTER'];
 
 function thirtyDaysFromNow() {
   const d = new Date();

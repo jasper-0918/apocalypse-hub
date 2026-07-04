@@ -9,34 +9,45 @@ export function getStripe(): Stripe {
   return _stripe;
 }
 
+// ---- Plans: FREE + SCRIPTER only ----
 export const PLANS = {
-  PRO: {
-    name: 'Pro',
-    price: 500,
-    priceId: process.env.STRIPE_PRO_PRICE_ID || '',
-    scriptLimit: 5,
-    features: ['5 scripts', 'Key protection', '30-day renewable key', 'Skip key system', 'Basic support'],
-  },
   SCRIPTER: {
     name: 'Scripter',
-    price: 1000,
+    price: 500, // $5 / month
     priceId: process.env.STRIPE_SCRIPTER_PRICE_ID || '',
-    scriptLimit: 20,
-    features: ['20 scripts', 'Key protection', '30-day renewable key', 'Skip key system', 'Email support'],
+    scriptLimit: 50,
+    features: [
+      '50 protected scripts',
+      'Universal key (1 account)',
+      'Skip the key system',
+      'Earn from your scripts',
+      'Priority support',
+    ],
   },
-  DEVELOPER: {
-    name: 'Developer',
-    price: 1500,
-    priceId: process.env.STRIPE_DEVELOPER_PRICE_ID || '',
-    scriptLimit: 30,
-    features: ['30 scripts', 'Key protection', '30-day renewable key', 'Skip key system', 'Priority support'],
-  },
+} as const;
+
+// ---- One-time add-on: +50 script slots for $10 ----
+export const SLOT_ADDON = {
+  name: '+50 Script Slots',
+  price: 1000, // $10 one-time
+  priceId: process.env.STRIPE_SLOTS_PRICE_ID || '',
+  slotsPerPack: 50,
 };
 
-export const PLAN_LIMITS: Record<string, number> = {
-  FREE: 0,
-  PRO: 5,
-  SCRIPTER: 20,
-  DEVELOPER: 30,
+// ---- Base script limits per plan (before purchased add-on packs) ----
+export const PLAN_BASE_LIMITS: Record<string, number> = {
+  FREE: 10,
+  SCRIPTER: 50,
+  ADMIN: 9999,
   OWNER: 9999,
 };
+
+/** Effective upload limit = plan base + (purchased +50 packs). */
+export function effectiveScriptLimit(plan: string, extraSlotPacks = 0): number {
+  const base = PLAN_BASE_LIMITS[plan] ?? PLAN_BASE_LIMITS.FREE;
+  if (base >= 9999) return base; // admin/owner: don't add packs
+  return base + extraSlotPacks * SLOT_ADDON.slotsPerPack;
+}
+
+// Backwards-compatible flat map (FREE now allows uploads).
+export const PLAN_LIMITS: Record<string, number> = PLAN_BASE_LIMITS;

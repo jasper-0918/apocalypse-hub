@@ -7,7 +7,7 @@ import { FileCode2, Key, Crown, Plus, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 const PLAN_LIMITS: Record<string, number> = {
-  FREE: 0, PRO: 5, SCRIPTER: 20, DEVELOPER: 30,
+  FREE: 10, SCRIPTER: 50,
 };
 
 export default function DashboardPage() {

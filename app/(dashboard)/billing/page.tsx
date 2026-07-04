@@ -79,8 +79,8 @@ export default function BillingPage() {
               </div>
               <p className="text-sm text-muted-foreground">
                 {plan === 'FREE'
-                  ? 'No scripts allowed. Upgrade to start protecting your scripts.'
-                  : `${plan === 'PRO' ? '5' : plan === 'SCRIPTER' ? '20' : '30'} scripts included`}
+                  ? 'Up to 10 scripts. Upgrade to Scripter for 50 + a universal key.'
+                  : '50 scripts included (+50 per add-on pack)'}
               </p>
             </div>
           </div>
