@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Apocalypse Hub — API Documentation</title>
+<meta name="description" content="Official API documentation for Apocalypse Hub — key management, script serving, and the Lua obfuscation pipeline." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☣</text></svg>" />
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header class="header">
+  <button class="menu-btn" id="menuBtn" aria-label="Menu">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <a class="brand" data-page="introduction">
+    <span class="logo">☣</span>
+    <span>Apocalypse Hub</span>
+    <span class="tag">Docs</span>
+  </a>
+  <div class="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="search" placeholder="Search documentation..." autocomplete="off" />
+    <kbd>/</kbd>
+  </div>
+  <nav class="header-links">
+    <a href="#" data-page="introduction">Guides</a>
+    <a href="#" data-page="api-status">API</a>
+    <a href="https://apocalypsehub.com/dashboard" class="primary">Dashboard</a>
+  </nav>
+</header>
+
+<div class="mobile-overlay" id="overlay"></div>
+
+<div class="layout">
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="nav-group">
+      <div class="nav-group-title">Getting Started</div>
+      <div class="nav-link" data-page="introduction">Introduction</div>
+      <div class="nav-link" data-page="authentication">Authentication</div>
+      <div class="nav-link" data-page="rate-limits">Rate Limits &amp; Errors</div>
+      <div class="nav-link" data-page="quickstart">Quick Start</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Key Management</div>
+      <div class="nav-link" data-page="api-status"><span class="m get">GET</span> API Status</div>
+      <div class="nav-link" data-page="key-details"><span class="m get">GET</span> Key Details</div>
+      <div class="nav-link" data-page="key-stats"><span class="m get">GET</span> Key Stats</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">User &amp; Key Management</div>
+      <div class="nav-link" data-page="create-key"><span class="m post">POST</span> Create Key</div>
+      <div class="nav-link" data-page="update-user"><span class="m patch">PATCH</span> Update User</div>
+      <div class="nav-link" data-page="delete-key"><span class="m delete">DEL</span> Delete Key</div>
+      <div class="nav-link" data-page="get-users"><span class="m get">GET</span> Get Users</div>
+      <div class="nav-link" data-page="reset-hwid"><span class="m post">POST</span> Reset HWID</div>
+      <div class="nav-link" data-page="link-discord"><span class="m post">POST</span> Link Discord</div>
+      <div class="nav-link" data-page="blacklist"><span class="m post">POST</span> Blacklist Key</div>
+      <div class="nav-link" data-page="unblacklist"><span class="m get">GET</span> Unblacklist</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Script Management</div>
+      <div class="nav-link" data-page="serve-script"><span class="m get">GET</span> Serve Script</div>
+      <div class="nav-link" data-page="update-script"><span class="m put">PUT</span> Update Script</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Guides</div>
+      <div class="nav-link" data-page="key-system">Key System (Free)</div>
+      <div class="nav-link" data-page="loadstring">Loadstring Usage</div>
+      <div class="nav-link" data-page="obfuscation">Obfuscation Pipeline</div>
+    </div>
+  </aside>
+
+  <!-- ===== Content ===== -->
+  <main class="content" id="content">
+
+    <!-- Introduction -->
+    <article class="doc-page active" id="introduction">
+      <div class="breadcrumb"><span>Docs</span><span class="sep">/</span><span class="cur">Introduction</span></div>
+      <h1>Apocalypse Hub API</h1>
+      <p class="lead">The Apocalypse Hub HTTP API lets script developers manage keys, users, and scripts programmatically — and powers the on-the-fly obfuscated script delivery used by executors.</p>
+      <div class="hero-badges">
+        <span class="b">v3</span><span class="b">REST / JSON</span><span class="b">Bearer auth</span><span class="b">60 req/min</span>
+      </div>
+      <div class="callout danger">
+        <span class="ico">⛔</span>
+        <p><strong>This is not a public API.</strong> Endpoints are available to Apocalypse Hub customers and verified script developers only. You must whitelist your server's IP address on the <a href="#" class="link">dashboard</a> before making calls — otherwise requests are blocked at the edge.</p>
+      </div>
+      <h2 id="base-url">Base URL</h2>
+      <p>All API requests are made to:</p>
+      <div class="endpoint"><span class="path">https://api.apocalypsehub.com</span></div>
+      <p>Every request must include a <code>Content-Type: application/json</code> header, and (unless noted) an <code>Authorization</code> header containing your API key.</p>
+      <h2 id="explore">Explore</h2>
+      <div class="card-grid">
+        <div class="card" data-page="authentication"><div class="ci">🔐</div><h4>Authentication</h4><p>How to authorize requests and whitelist your IP.</p></div>
+        <div class="card" data-page="create-key"><div class="ci">🗝️</div><h4>Create a key</h4><p>Generate account-bound or unassigned user keys.</p></div>
+        <div class="card" data-page="serve-script"><div class="ci">📜</div><h4>Serve a script</h4><p>The core loadstring delivery + key validation flow.</p></div>
+        <div class="card" data-page="key-system"><div class="ci">🎟️</div><h4>Free key system</h4><p>Work.ink / Linkvertise gated 12-hour keys.</p></div>
+      </div>
+      <h2 id="concepts">Core concepts</h2>
+      <ul>
+        <li><strong>Keys</strong> follow the format <code>APOC-XXXX-XXXX-XXXX</code> and are either free (12-hour, gated) or paid (30-day, account-bound).</li>
+        <li><strong>Projects</strong> group scripts. A user whitelisted in a project can access every script within it.</li>
+        <li><strong>HWID auto-assignment</strong> — if a key has no HWID, it binds to the first machine that executes the script.</li>
+        <li><strong>Paid keys</strong> require a matching <code>uid</code> parameter so a key only works for its owner's account.</li>
+      </ul>
+      <div class="page-nav">
+        <span></span>
+        <a class="next" data-page="authentication"><div class="dir">Next →</div><div class="ttl">Authentication</div></a>
+      </div>
+    </article>
+
+    <!-- Authentication -->
+    <article class="doc-page" id="authentication">
+      <div class="breadcrumb"><span>Getting Started</span><span class="sep">/</span><span class="cur">Authentication</span></div>
+      <h1>Authentication</h1>
+      <p class="lead">Most endpoints require an API key passed in the <code>Authorization</code> header. Your API key is tied to your account and grants access to your projects.</p>
+      <div class="callout warning">
+        <span class="ico">⚠️</span>
+        <p>Treat your API key like a password. Anyone with it can create, delete, and blacklist keys across your projects. Rotate it from the dashboard if it leaks.</p>
+      </div>
+      <h2 id="header">Authorization header</h2>
+      <p>Send your key in the <code>Authorization</code> header on every authenticated request:</p>
+      <div class="code-wrap">
+        <div class="code-head"><span class="fname">request headers</span><button class="copy-btn">Copy</button></div>
+        <pre><code><span class="tok-prop">Authorization</span><span class="tok-punc">:</span> apoc_live_3f9a2c8e1b7d4a06e5c2
+<span class="tok-prop">Content-Type</span><span class="tok-punc">:</span> application/json</code></pre>
+      </div>
+      <h2 id="ip">IP whitelisting</h2>
+      <div class="callout danger">
+        <span class="ico">⛔</span>
+        <p><strong>You must whitelist your server's IP</strong> under <em>Dashboard → Developer → API Access</em>. Requests from non-whitelisted IPs are rejected with <code>403</code> before reaching the API.</p>
+      </div>
+      <h2 id="test">Test your credentials</h2>
+      <div class="code-wrap">
+        <div class="code-head"><span class="fname">cURL</span><button class="copy-btn">Copy</button></div>
+        <pre><code><span class="tok-fn">curl</span> https://api.apocalypsehub.com/v3/keys/YOUR_API_KEY/details \
+  -H <span class="tok-str">"Authorization: YOUR_API_KEY"</span> \
+  -H <span class="tok-str">"Content-Type: application/json"</span></code></pre>
+      </div>
+      <div class="page-nav">
+        <a data-page="introduction"><div class="dir">← Prev</div><div class="ttl">Introduction</div></a>
+        <a class="next" data-page="rate-limits"><div class="dir">Next →</div><div class="ttl">Rate Limits &amp; Errors</div></a>
+      </div>
+    </article>
+
+    <!-- Rate limits -->
+    <article class="doc-page" id="rate-limits">
+      <div class="breadcrumb"><span>Getting Started</span><span class="sep">/</span><span class="cur">Rate Limits &amp; Errors</span></div>
+      <h1>Rate Limits &amp; Errors</h1>
+      <p class="lead">The API allows a maximum of <strong>60 requests per minute</strong> per API key. Exceeding this returns a <code>429</code>.</p>
+      <h2 id="status-codes">Status codes</h2>
+      <table class="params">
+        <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>200</td><td>Success — the request completed.</td></tr>
+          <tr><td>400</td><td>Bad request — malformed body or missing required parameter.</td></tr>
+          <tr><td>403</td><td>Forbidden — invalid API key, or IP not whitelisted.</td></tr>
+          <tr><td>404</td><td>Not found — the key, user, or script does not exist.</td></tr>
+          <tr><td>429</td><td>Too many requests — you exceeded 60 req/min.</td></tr>
+        </tbody>
+      </table>
+      <h2 id="error-shape">Error response shape</h2>
+      <div class="code-wrap">
+        <div class="code-head"><span class="fname">403 Forbidden</span><button class="copy-btn">Copy</button></div>
+        <pre><code><span class="tok-punc">{</span>
+  <span class="tok-prop">"success"</span><span class="tok-punc">:</span> <span class="tok-bool">false</span><span class="tok-punc">,</span>
+  <span class="tok-prop">"message"</span><span class="tok-punc">:</span> <span class="tok-str">"Invalid API key or IP not whitelisted."</span><span class="tok-punc">,</span>
+  <span class="tok-prop">"code"</span><span class="tok-punc">:</span> <span class="tok-str">"UNAUTHORIZED"</span>
+<span class="tok-punc">}</span></code></pre>
+      </div>
+      <div class="page-nav">
+        <a data-page="authentication"><div class="dir">← Prev</div><div class="ttl">Authentication</div></a>
+        <a class="next" data-page="quickstart"><div class="dir">Next →</div><div class="ttl">Quick Start</div></a>
+      </div>
+    </article>
+
+    <!-- Quickstart -->
+    <article class="doc-page" id="quickstart">
+      <div class="breadcrumb"><span>Getting Started</span><span class="sep">/</span><span class="cur">Quick Start</span></div>
+      <h1>Quick Start</h1>
+      <p class="lead">Generate a key and deliver a protected script in three steps.</p>
+      <h2 id="s1">1. Create a user key</h2>
+      <div class="code-wrap">
+        <div class="code-head"><span class="fname">cURL</span><button class="copy-btn">Copy</button></div>
+        <pre><code><span class="tok-fn">curl</span> -X POST https://api.apocalypsehub.com/v3/projects/PROJECT_ID/users \
+  -H <span class="tok-str">"Authorization: YOUR_API_KEY"</span> \
+  -H <span class="tok-str">"Content-Type: application/json"</span> \
+  -d <span class="tok-str">'{ "key_days": 30, "note": "customer#1024" }'</span></code></pre>
+      </div>
+      <h2 id="s2">2. Share the loadstring</h2>
+      <div class="code-wrap">
+        <div class="code-head"><span class="fname">Lua</span><button class="copy-btn">Copy</button></div>
+        <pre><code><span class="tok-fn">loadstring</span><span class="tok-punc">(</span><span class="tok-fn">game</span><span class="tok-punc">:</span><span class="tok-fn">HttpGet</span><span class="tok-punc">(</span>
+  <span class="tok-str">"https://api.apocalypsehub.com/v3/scripts/serve/SCRIPT_ID?key="</span> .. key
+<span class="tok-punc">))()</span></code></pre>
+      </div>
+      <h2 id="s3">3. The user executes</h2>
+      <p>On execution the API validates the key, obfuscates the Lua on-the-fly, and returns the protected payload. The HWID binds automatically on first run.</p>
+      <div class="callout success"><span class="ico">✅</span><p>That's it — your script is now key-locked and obfuscated. Manage the key's lifetime, HWID, and blacklist status through the endpoints in this reference.</p></div>
+      <div class="page-nav">
+        <a data-page="rate-limits"><div class="dir">← Prev</div><div class="ttl">Rate Limits &amp; Errors</div></a>
+        <a class="next" data-page="api-status"><div class="dir">Next →</div><div class="ttl">API Status</div></a>
+      </div>
+    </article>
+
+    <!-- API Status -->
+    <article class="doc-page" id="api-status">
+      <div class="breadcrumb"><span>Key Management</span><span class="sep">/</span><span class="cur">API Status</span></div>
+      <h1>Get API Status</h1>
+      <p class="lead">Returns the API version and operational status. No authentication required.</p>
+      <div class="endpoint"><span class="method m get">GET</span><span class="path">/status</span></div>
+      <h2 id="ex">Example request</h2>
+      <div class="code-wrap">
+        <div class="code-head"><span class="fname">cURL</span><button class="copy-btn">Copy</button></div>
+        <pre><code><span class="tok-fn">curl</span> https://api.apocalypsehub.com/status</code></pre>
+      </div>
+      <h2 id="resp">Responses</h2>
+      <div class="tabs" data-tabs>
+        <div class="tab-bar">
+          <button class="tab-btn active"><span class="dot ok"></span>200 OK</button>
+        </div>
+        <div class="tab-panel active">
+          <div class="code-wrap"><div class="code-head"><span class="fname">200</span><button class="copy-btn">Copy</button></div>
+          <pre><code><span class="tok-punc">{</span>
+  <span class="tok-prop">"success"</span><span class="tok-punc">:</span> <span class="tok-bool">true</span><span class="tok-punc">,</span>
+  <span class="tok-prop">"version"</span><span class="tok-punc">:</span> <span class="tok-str">"3.2.1"</span><span class="tok-punc">,</span>
+  <span class="tok-prop">"status"</span><span class="tok-punc">:</span> <span class="tok-str">"operational"</span>
+<span class="tok-punc">}</span></code></pre></div>
+        </div>
+      </div>
+      <div class="page-nav">
+        <a data-page="quickstart"><div class="dir">← Prev</div><div class="ttl">Quick Start</div></a>
+        <a class="next" data-page="key-details"><div class="dir">Next →</div><div class="ttl">Key Details</div></a>
+      </div>
+    </article>
+
+    <!-- Key Details -->
+    <article class="doc-page" id="key-details">
+      <div class="breadcrumb"><span>Key Management</span><span class="sep">/</span><span class="cur">Key Details</span></div>
+      <h1>Get API Key Details</h1>
+      <p class="lead">Retrieves project and script information along with execution metrics for the given API key.</p>
+      <div class="endpoint"><span class="method m get">GET</span><span class="path">/v3/keys/<span class="param">:api_key</span>/details</span></div>
+      <h2 id="path">Path parameters</h2>
+      <table class="params"><thead><tr><th>Parameter</th><th>Description</th></tr></thead><tbody>
+        <tr><td>api_key <span class="req">required</span></td><td><span class="type">string</span> — your project API key.</td></tr>
+      </tbody></table>
+      <h2 id="resp">Responses</h2>
+      <div class="tabs" data-tabs>
+        <div class="tab-bar">
+          <button class="tab-btn active"><span class="dot ok"></span>200</button>
+          <button class="tab-btn"><span class="dot err"></span>403</button>
+        </div>
+        <div class="tab-panel active">
+          <div class="code-wrap"><div class="code-head"><span class="fname">200 OK</span><button class="copy-btn">Copy</button></div>
+          <pre><code><span class="tok-punc">{</span>
+  <span class="tok-prop">"success"</span><span class="tok-punc">:</span> <span class="tok-bool">true</span><span class="tok-punc">,</span>
+  <span class="tok-prop">"projects"</span><span class="tok-punc">:</span> <span class="tok-punc">[{</span>
+    <span class="tok-prop">"id"</span><span class="tok-punc">:</span> <span class="tok-str">"prj_a91f"</span><span class="tok-punc">,</span>
+    <span class="tok-prop">"name"</span><span class="tok-punc">:</span> <span class="tok-str">"Apocalypse Universal"</span><span class="tok-punc">,</span>
+    <span class="tok-prop">"scripts"</span><span class="tok-punc">:</span> <span class="tok-num">4</span><span class="tok-punc">,</span>
+    <span class="tok-prop">"executions_today"</span><span class="tok-punc">:</span> <span class="tok-num">18422</span>
+  <span class="tok-punc">}]</span>
+<span class="tok-punc">}</span></code></pre></div>
+        </div>
+        <div class="tab-panel">
+          <div class="code-wrap"><div class="code-head"><span class="fname">403 Forbidden</span><button class="copy-btn">Copy</button></div>
+          <pre><code><span class="tok-punc">{</span> <span class="tok-prop">"success"</span><span class="tok-punc">:</span> <span class="tok-bool">false</span><span class="tok-punc">,</span> <span class="tok-prop">"message"</span><span class="tok-punc">:</span> <span class="tok-str">"Invalid API key"</span> <span class="tok-punc">}</span></code></pre></div>
+        </div>
+      </div>
+      <div class="page-nav">
+        <a data-page="api-status"><div class="dir">← Prev</div><div class="ttl">API Status</div></a>
+        <a class="next" data-page="key-stats"><div class="dir">Next →</div><div class="ttl">Key Stats</div></a>
+      </div>
+    </article>
+
+    <!-- Key Stats -->
+    <article class="doc-page" id="key-stats">
+      <div class="breadcrumb"><span>Key Management</span><span class="sep">/</span><span class="cur">Key Stats</span></div>
+      <h1>Get API Key Stats</h1>
+      <p class="lead">Returns execution frequency, obfuscation limits, and user counts for your key.</p>
+      <div class="endpoint"><span class="method m get">GET</span><span class="path">/v3/keys/<span class="param">:api_key</span>/stats</span></div>
+      <h2 id="query">Query parameters</h2>
+      <table class="params"><thead><tr><th>Parameter</th><th>Description</th></tr></thead><tbody>
+        <tr><td>noUsers <span class="opt">optional</span></td><td><span class="type">boolean</span> — omit the per-user array to reduce payload size.</td></tr>
+      </tbody></table>
+      <h2 id="resp">Response</h2>
+      <div class="code-wrap"><div class="code-head"><span class="fname">200 OK</span><button class="copy-btn">Copy</button></div>
+      <pre><code><span class="tok-punc">{</span>
+  <span class="tok-prop">"success"</span><span class="tok-punc">:</span> <span class="tok-bool">true</span><span class="tok-punc">,</span>
+  <span class="tok-prop">"executions"</span><span class="tok-punc">:</span> <span class="tok-num">18422</span><span class="tok-punc">,</span>
+  <span class="tok-prop">"total_users"</span><span class="tok-punc">:</span> <span class="tok-num">903</span><span class="tok-punc">,</span>
+  <span class="tok-prop">"obfuscations_left"</span><span class="tok-punc">:</span> <span class="tok-num">450</span><span class="tok-punc">,</span>
+  <span class="tok-prop">"reset_at"</span><span class="tok-punc">:</span> <span class="tok-num">1751673600</span>
+<span class="tok-punc">}</span></code></pre></div>
+      <div class="page-nav">
+        <a data-page="key-details"><div class="dir">← Prev</div><div class="ttl">Key Details</div></a>
+        <a class="next" data-page="create-key"><div class="dir">Next →</div><div class="ttl">Create Key</div></a>
+      </div>
+    </article>
+
+    <!-- Create Key -->
+    <article class="doc-page" id="create-key">
+      <div class="breadcrumb"><span>User &amp; Key Management</span><span class="sep">/</span><span class="cur">Create Key</span></div>
+      <h1>Create a Key / User</h1>
+      <p class="lead">Every user you add gets a random <code>APOC-XXXX-XXXX-XXXX</code> key generated for them. Omit assignment fields to create an <em>unassigned</em> key a user can later claim.</p>
+      <div class="endpoint"><span class="method m post">POST</span><span class="path">/v3/projects/<span class="param">:project_id</span>/users</span></div>
+      <h2 id="body">Body parameters</h2>
+      <table class="params"><thead><tr><th>Parameter</th><th>Description</th></tr></thead><tbody>
+        <tr><td>key_days <span class="opt">optional</span></td><td><span class="type">number</span> — days the key stays valid, counted from first use.</td></tr>
+        <tr><td>auth_expire <span class="opt">optional</span></td><td><span class="type">number</span> — Unix timestamp for a fixed expiry (alternative to <code>key_days</code>).</td></tr>
+        <tr><td>identifier <span class="opt">optional</span></td><td><span class="type">string</span> — pre-bind the key to an HWID or user identifier.</td></tr>
+        <tr><td>discord_id <span class="opt">optional</span></td><td><span class="type">string</span> — link a Discord account to the key.</td></tr>
+        <tr><td>note <span class="opt">optional</span></td><td><span class="type">string</span> — internal note shown in the dashboard.</td></tr>
+      </tbody></table>
+      <div class="callout info"><span class="ico">💡</span><p>If you don't pass <code>identifier</code> or <code>discord_id</code>, the key is created <strong>unassigned</strong> — the first user to execute claims it and auto-binds their HWID.</p></div>
+      <h2 id="ex">Example request</h2>
+      <div class="code-wrap"><div class="code-head"><span class="fname">cURL</span><button class="copy-btn">Copy</button></div>
+      <pre><code><span class="tok-fn">curl</span> -X POST https://api.apocalypsehub.com/v3/projects/prj_a91f/users \
+  -H <span class="tok-str">"Authorization: YOUR_API_KEY"</span> \
+  -H <span class="tok-str">"Content-Type: application/json"</span> \
+  -d <span class="tok-str">'{ "key_days": 30, "note": "sale-1024" }'</span></code></pre></div>
+      <h2 id="resp">Responses</h2>
+      <div class="tabs" data-tabs>
+        <div class="tab-bar">
+          <button class="tab-btn active"><span class="dot ok"></span>200</button>
+          <button class="tab-btn"><span class="dot warn"></span>400</button>
+        </div>
+        <div class="tab-panel active">
+          <div class="code-wrap"><div class="code-head"><span class="fname">200 OK</span><button class="copy-btn">Copy</button></div>
+          <pre><code><span class="tok-punc">{</span>
+  <span class="tok-prop">"success"</span><span class="tok-punc">:</span> <span class="tok-bool">true</span><span class="tok-punc">,</span>
+  <span class="tok-prop">"user_key"</span><span class="tok-punc">:</span> <span class="tok-str">"APOC-7F2A-9C1B-04E5"</span><span class="tok-punc">,</span>
+  <span class="tok-prop">"auth_expire"</span><span class="tok-punc">:</span> <span class="tok-num">-1</span><span class="tok-punc">,</span>
+  <span class="tok-prop">"key_days"</span><span class="tok-punc">:</span> <span class="tok-num">30</span>
+<span class="tok-punc">}</span></code></pre></div>
+        </div>
+        <div class="tab-panel">
+          <div class="code-wrap"><div class="code-head"><span class="fname">400 Bad Request</span><button class="copy-btn">Copy</button></div>
+          <pre><code><span class="tok-punc">{</span> <span class="tok-prop">"success"</span><span class="tok-punc">:</span> <span class="tok-bool">false</span><span class="tok-punc">,</span> <span class="tok-prop">"message"</span><span class="tok-punc">:</span> <span class="tok-str">"key_days must be a positive integer"</span> <span class="tok-punc">}</span></code></pre></div>
+        </div>
+      </div>
+      <div class="page-nav">
+        <a data-page="key-stats"><div class="dir">← Prev</div><div class="ttl">Key Stats</div></a>
+        <a class="next" data-page="update-user"><div class="dir">Next →</div><div class="ttl">Update User</div></a>
+      </div>
+    </article>
+
+    <!-- Update User -->
+    <article class="doc-page" id="update-user">
+      <div class="breadcrumb"><span>User &amp; Key Management</span><span class="sep">/</span><span class="cur">Update User</span></div>
+      <h1>Update an Existing User</h1>
+      <p class="lead">Modify a key's expiry, note, identifier, or Discord link. The target key is required.</p>
+      <div class="endpoint"><span class="method m patch">PATCH</span><span class="path">/v3/projects/<span class="param">:project_id</span>/users</span></div>
+      <h2 id="body">Body parameters</h2>
+      <table class="params"><thead><tr><th>Parameter</th><th>Description</th></tr></thead><tbody>
+        <tr><td>user_key <span class="req">required</span></td><td><span class="type">string</span> — the key to update.</td></tr>
+        <tr><td>auth_expire <span class="opt">optional</span></td><td><span class="type">number</span> — new Unix expiry timestamp.</td></tr>
+        <tr><td>identifier <span class="opt">optional</span></td><td><span class="type">string</span> — new HWID / identifier.</td></tr>
+        <tr><td>discord_id <span class="opt">optional</span></td><td><span class="type">string</span> — new linked Discord ID.</td></tr>
+        <tr><td>note <span class="opt">optional</span></td><td><span class="type">string</span> — updated internal note.</td></tr>
+      </tbody></table>
+      <div class="code-wrap"><div class="code-head"><span class="fname">200 OK</span><button class="copy-btn">Copy</button></div>
+      <pre><code><span class="tok-punc">{</span> <span class="tok-prop">"success"</span><span class="tok-punc">:</span> <span class="tok-bool">true</span><span class="tok-punc">,</span> <span class="tok-prop">"message"</span><span class="tok-punc">:</span> <span class="tok-str">"User updated"</span> <span class="tok-punc">}</span></code></pre></div>
+      <div class="page-nav">
+        <a data-page="create-key"><div class="dir">← Prev</div><div class="ttl">Create Key</div></a>
+        <a class="next" data-page="delete-key"><div class="dir">Next →</div><div class="ttl">Delete Key</div></a>
+      </div>
+    </article>
+
+    <!-- Delete Key -->
+    <article class="doc-page" id="delete-key">
+      <div class="breadcrumb"><span>User &amp; Key Management</span><span class="sep">/</span><span class="cur">Delete Key</span></div>
+      <h1>Delete a Key</h1>
+      <p class="lead">Permanently removes a user's key and revokes their access.</p>
+      <div class="endpoint"><span class="method m delete">DELETE</span><span class="path">/v3/projects/<span class="param">:project_id</span>/users?user_key=<span class="param">KEY</span></span></div>
+      <div class="callout warning"><span class="ico">⚠️</span><p>This is irreversible. The HWID binding and key history are erased. To temporarily block a user instead, use <a href="#" class="link" data-page="blacklist">Blacklist</a>.</p></div>
+      <h2 id="resp">Responses</h2>
+      <div class="tabs" data-tabs>
+        <div class="tab-bar">
+          <button class="tab-btn active"><span class="dot ok"></span>200</button>
+          <button class="tab-btn"><span class="dot err"></span>404</button>
+        </div>
+        <div class="tab-panel active"><div class="code-wrap"><div class="code-head"><span class="fname">200 OK</span><button class="copy-btn">Copy</button></div>
+          <pre><code><span class="tok-punc">{</span> <span class="tok-prop">"success"</span><span class="tok-punc">:</span> <span class="tok-bool">true</span><span class="tok-punc">,</span> <span class="tok-prop">"message"</span><span class="tok-punc">:</span> <span class="tok-str">"Key deleted"</span> <span class="tok-punc">}</span></code></pre></div></div>
+        <div class="tab-panel"><div class="code-wrap"><div class="code-head"><span class="fname">404 Not Found</span><button class="copy-btn">Copy</button></div>
+          <pre><code><span class="tok-punc">{</span> <span class="tok-prop">"success"</span><span class="tok-punc">:</span> <span class="tok-bool">false</span><span class="tok-punc">,</span> <span class="tok-prop">"message"</span><span class="tok-punc">:</span> <span class="tok-str">"Key not found"</span> <span class="tok-punc">}</span></code></pre></div></div>
+      </div>
+      <div class="page-nav">
+        <a data-page="update-user"><div class="dir">← Prev</div><div class="ttl">Update User</div></a>
+        <a class="next" data-page="get-users"><div class="dir">Next →</div><div class="ttl">Get Users</div></a>
+      </div>
+    </article>
+
+    <!-- Get Users -->
+    <article class="doc-page" id="get-users">
+      <div class="breadcrumb"><span>User &amp; Key Management</span><span class="sep">/</span><span class="cur">Get Users</span></div>
+      <h1>Get Users</h1>
+      <p class="lead">Returns an array of user objects with their status: <code>active</code>, <code>reset</code>, or <code>banned</code>.</p>
+      <div class="endpoint"><span class="method m get">GET</span><span class="path">/v3/projects/<span class="param">:project_id</span>/users</span></div>
+      <h2 id="query">Query filters</h2>
+      <table class="params"><thead><tr><th>Parameter</th><th>Description</th></tr></thead><tbody>
+        <tr><td>user_key <span class="opt">optional</span></td><td><span class="type">string</span> — fetch a single key.</td></tr>
+        <tr><td>discord_id <span class="opt">optional</span></td><td><span class="type">string</span> — filter by linked Discord.</td></tr>
+        <tr><td>identifier <span class="opt">optional</span></td><td><span class="type">string</span> — filter by HWID / identifier.</td></tr>
+        <tr><td>from / until <span class="opt">optional</span></td><td><span class="type">number</span> — created-at Unix range.</td></tr>
+        <tr><td>search <span class="opt">optional</span></td><td><span class="type">string</span> — free-text search on note.</td></tr>
+      </tbody></table>
+      <div class="code-wrap"><div class="code-head"><span class="fname">200 OK</span><button class="copy-btn">Copy</button></div>
+      <pre><code><span class="tok-punc">{</span>
+  <span class="tok-prop">"success"</span><span class="tok-punc">:</span> <span class="tok-bool">true</span><span class="tok-punc">,</span>
+  <span class="tok-prop">"users"</span><span class="tok-punc">:</span> <span class="tok-punc">[{</span>
+    <span class="tok-prop">"user_key"</span><span class="tok-punc">:</span> <span class="tok-str">"APOC-7F2A-9C1B-04E5"</span><span class="tok-punc">,</span>
+    <span class="tok-prop">"status"</span><span class="tok-punc">:</span> <span class="tok-str">"active"</span><span class="tok-punc">,</span>
+    <span class="tok-prop">"identifier"</span><span class="tok-punc">:</span> <span class="tok-str">"a71f9c2e"</span><span class="tok-punc">,</span>
+    <span class="tok-prop">"auth_expire"</span><span class="tok-punc">:</span> <span class="tok-num">1754265600</span>
+  <span class="tok-punc">}]</span>
+<span class="tok-punc">}</span></code></pre></div>
+      <div class="page-nav">
+        <a data-page="delete-key"><div class="dir">← Prev</div><div class="ttl">Delete Key</div></a>
+        <a class="next" data-page="reset-hwid"><div class="dir">Next →</div><div class="ttl">Reset HWID</div></a>
+      </div>
+    </article>
+
+    <!-- Reset HWID -->
+    <article class="doc-page" id="reset-hwid">
+      <div class="breadcrumb"><span>User &amp; Key Management</span><span class="sep">/</span><span class="cur">Reset HWID</span></div>
+      <h1>Reset the HWID of a Key</h1>
+      <p class="lead">Clears the machine binding so the key can be re-claimed on a new device.</p>
+      <div class="endpoint"><span class="method m post">POST</span><span class="path">/v3/projects/<span class="param">:project_id</span>/users/resethwid</span></div>
+      <h2 id="body">Body parameters</h2>
+      <table class="params"><thead><tr><th>Parameter</th><th>Description</th></tr></thead><tbody>
+        <tr><td>user_key <span class="req">required</span></td><td><span class="type">string</span> — the key to reset.</td></tr>
+        <tr><td>force <span class="opt">optional</span></td><td><span class="type">boolean</span> — ignore the reset cooldown when <code>true</code>.</td></tr>
+      </tbody></table>
+      <div class="callout info"><span class="ico">💡</span><p>Normal resets are rate-limited by a per-key cooldown. Pass <code>force: true</code> from an admin context to override it.</p></div>
+      <div class="page-nav">
+        <a data-page="get-users"><div class="dir">← Prev</div><div class="ttl">Get Users</div></a>
+        <a class="next" data-page="link-discord"><div class="dir">Next →</div><div class="ttl">Link Discord</div></a>
+      </div>
+    </article>
+
+    <!-- Link Discord -->
+    <article class="doc-page" id="link-discord">
+      <div class="breadcrumb"><span>User &amp; Key Management</span><span class="sep">/</span><span class="cur">Link Discord</span></div>
+      <h1>Link a Discord ID to a Key</h1>
+      <p class="lead">Associates a Discord account with a key for support and verification bots.</p>
+      <div class="endpoint"><span class="method m post">POST</span><span class="path">/v3/projects/<span class="param">:project_id</span>/users/linkdiscord</span></div>
+      <table class="params"><thead><tr><th>Parameter</th><th>Description</th></tr></thead><tbody>
+        <tr><td>user_key <span class="req">required</span></td><td><span class="type">string</span> — the target key.</td></tr>
+        <tr><td>discord_id <span class="req">required</span></td><td><span class="type">string</span> — the Discord user ID to link.</td></tr>
+        <tr><td>force <span class="opt">optional</span></td><td><span class="type">boolean</span> — overwrite an existing link.</td></tr>
+      </tbody></table>
+      <div class="page-nav">
+        <a data-page="reset-hwid"><div class="dir">← Prev</div><div class="ttl">Reset HWID</div></a>
+        <a class="next" data-page="blacklist"><div class="dir">Next →</div><div class="ttl">Blacklist Key</div></a>
+      </div>
+    </article>
+
+    <!-- Blacklist -->
+    <article class="doc-page" id="blacklist">
+      <div class="breadcrumb"><span>User &amp; Key Management</span><span class="sep">/</span><span class="cur">Blacklist Key</span></div>
+      <h1>Blacklist a Key</h1>
+      <p class="lead">Bans a key from executing any script in the project. Returns an <code>unban_token</code> you can use to reverse it.</p>
+      <div class="endpoint"><span class="method m post">POST</span><span class="path">/v3/projects/<span class="param">:project_id</span>/users/blacklist</span></div>
+      <table class="params"><thead><tr><th>Parameter</th><th>Description</th></tr></thead><tbody>
+        <tr><td>user_key <span class="req">required</span></td><td><span class="type">string</span> — the key to ban.</td></tr>
+        <tr><td>ban_reason <span class="opt">optional</span></td><td><span class="type">string</span> — reason shown to the user.</td></tr>
+        <tr><td>ban_expire <span class="opt">optional</span></td><td><span class="type">number</span> — Unix timestamp, or <code>-1</code> for permanent.</td></tr>
+      </tbody></table>
+      <div class="code-wrap"><div class="code-head"><span class="fname">200 OK</span><button class="copy-btn">Copy</button></div>
+      <pre><code><span class="tok-punc">{</span>
+  <span class="tok-prop">"success"</span><span class="tok-punc">:</span> <span class="tok-bool">true</span><span class="tok-punc">,</span>
+  <span class="tok-prop">"unban_token"</span><span class="tok-punc">:</span> <span class="tok-str">"ubt_5c1e9a3f0b7d"</span>
+<span class="tok-punc">}</span></code></pre></div>
+      <div class="page-nav">
+        <a data-page="link-discord"><div class="dir">← Prev</div><div class="ttl">Link Discord</div></a>
+        <a class="next" data-page="unblacklist"><div class="dir">Next →</div><div class="ttl">Unblacklist</div></a>
+      </div>
+    </article>
+
+    <!-- Unblacklist -->
+    <article class="doc-page" id="unblacklist">
+      <div class="breadcrumb"><span>User &amp; Key Management</span><span class="sep">/</span><span class="cur">Unblacklist</span></div>
+      <h1>Unblacklist a Key</h1>
+      <p class="lead">Reverses a ban using the <code>unban_token</code> returned by the blacklist endpoint. No API key needed — this endpoint is browser-accessible.</p>
+      <div class="endpoint"><span class="method m get">GET</span><span class="path">/v3/projects/<span class="param">:project_id</span>/users/unban?unban_token=<span class="param">TOKEN</span></span></div>
+      <div class="callout info"><span class="ico">💡</span><p>Because it needs no API key, you can hand the unban URL directly to a moderator or embed it in a Discord button.</p></div>
+      <div class="page-nav">
+        <a data-page="blacklist"><div class="dir">← Prev</div><div class="ttl">Blacklist Key</div></a>
+        <a class="next" data-page="serve-script"><div class="dir">Next →</div><div class="ttl">Serve Script</div></a>
+      </div>
+    </article>
+
+    <!-- Serve Script -->
+    <article class="doc-page" id="serve-script">
+      <div class="breadcrumb"><span>Script Management</span><span class="sep">/</span><span class="cur">Serve Script</span></div>
+      <h1>Serve a Script</h1>
+      <p class="lead">The core delivery endpoint. Validates the key, obfuscates the Lua on-the-fly, and returns the protected payload for the executor to run.</p>
+      <div class="endpoint"><span class="method m get">GET</span><span class="path">/v3/scripts/serve/<span class="param">:script_id</span>?key=<span class="param">KEY</span>&amp;uid=<span class="param">UID</span></span></div>
+      <h2 id="params">Parameters</h2>
+      <table class="params"><thead><tr><th>Parameter</th><th>Description</th></tr></thead><tbody>
+        <tr><td>key <span class="req">required</span></td><td><span class="type">query</span> — the user's <code>APOC-…</code> key.</td></tr>
+        <tr><td>uid <span class="opt">conditional</span></td><td><span class="type">query</span> — required for paid keys; must match the key's owner.</td></tr>
+      </tbody></table>
+      <h2 id="flow">Validation flow</h2>
+      <ul>
+        <li>Confirms the key exists and is <code>active</code>.</li>
+        <li><strong>Paid key</strong> → requires <code>uid</code>, verifies it matches <code>assigned_to</code>, and checks the plan is still active.</li>
+        <li><strong>Free key</strong> → checks the <code>script_keys</code> authorization table.</li>
+        <li>Obfuscates the script and returns it.</li>
+      </ul>
+      <h2 id="usage">Executor usage</h2>
+      <div class="code-wrap"><div class="code-head"><span class="fname">Lua</span><button class="copy-btn">Copy</button></div>
+      <pre><code><span class="tok-fn">loadstring</span><span class="tok-punc">(</span><span class="tok-fn">game</span><span class="tok-punc">:</span><span class="tok-fn">HttpGet</span><span class="tok-punc">(</span>
+  <span class="tok-str">"https://apocalypsehub.com/api/scripts/serve/SCRIPT_ID?key=KEY&amp;uid=UID"</span>
+<span class="tok-punc">))()</span></code></pre></div>
+      <div class="callout danger"><span class="ico">⛔</span><p>Paid keys are account-bound. If <code>uid</code> is missing or doesn't match <code>assigned_to</code>, the API responds with an obfuscated error stub instead of the script.</p></div>
+      <div class="page-nav">
+        <a data-page="unblacklist"><div class="dir">← Prev</div><div class="ttl">Unblacklist</div></a>
+        <a class="next" data-page="update-script"><div class="dir">Next →</div><div class="ttl">Update Script</div></a>
+      </div>
+    </article>
+
+    <!-- Update Script -->
+    <article class="doc-page" id="update-script">
+      <div class="breadcrumb"><span>Script Management</span><span class="sep">/</span><span class="cur">Update Script</span></div>
+      <h1>Update a Script</h1>
+      <p class="lead">Replaces the raw source of a script. The next serve request re-obfuscates from the new source.</p>
+      <div class="endpoint"><span class="method m put">PUT</span><span class="path">/v3/projects/<span class="param">:project_id</span>/scripts/<span class="param">:script_id</span></span></div>
+      <table class="params"><thead><tr><th>Parameter</th><th>Description</th></tr></thead><tbody>
+        <tr><td>script <span class="req">required</span></td><td><span class="type">string</span> — the raw Lua source.</td></tr>
+        <tr><td>silent <span class="opt">optional</span></td><td><span class="type">boolean</span> — suppress the update webhook notification.</td></tr>
+        <tr><td>ffa <span class="opt">optional</span></td><td><span class="type">boolean</span> — free-for-all: bypass key checks (public script).</td></tr>
+        <tr><td>heartbeat <span class="opt">optional</span></td><td><span class="type">boolean</span> — enable periodic liveness pings.</td></tr>
+      </tbody></table>
+      <div class="page-nav">
+        <a data-page="serve-script"><div class="dir">← Prev</div><div class="ttl">Serve Script</div></a>
+        <a class="next" data-page="key-system"><div class="dir">Next →</div><div class="ttl">Key System</div></a>
+      </div>
+    </article>
+
+    <!-- Key System guide -->
+    <article class="doc-page" id="key-system">
+      <div class="breadcrumb"><span>Guides</span><span class="sep">/</span><span class="cur">Key System</span></div>
+      <h1>The Free Key System</h1>
+      <p class="lead">Free users unlock a 12-hour key by completing a link-shortener task (Work.ink or Linkvertise). This monetizes free access without a subscription.</p>
+      <h2 id="flow">Flow</h2>
+      <ol>
+        <li>User visits <code>/get-key</code>.</li>
+        <li>Clicks the Work.ink or Linkvertise link.</li>
+        <li>Completes the task → redirected back with <code>?task=completed&amp;provider=xxx</code>.</li>
+        <li>Frontend auto-claims the key via <code>POST /api/keys</code>.</li>
+        <li>The key is linked to all published scripts via the <code>script_keys</code> table and expires in 12 hours.</li>
+      </ol>
+      <div class="callout warning"><span class="ico">⚠️</span><p>Always validate the completion callback server-side against the provider's token. Never trust the <code>task=completed</code> query flag alone — it's trivially spoofable.</p></div>
+      <h2 id="paid">Paid users</h2>
+      <p>PRO / SCRIPTER / DEVELOPER plans skip the gate entirely and generate a 30-day account-bound key at <code>/dashboard/keys</code> via <code>POST /api/keys/paid</code>.</p>
+      <div class="page-nav">
+        <a data-page="update-script"><div class="dir">← Prev</div><div class="ttl">Update Script</div></a>
+        <a class="next" data-page="loadstring"><div class="dir">Next →</div><div class="ttl">Loadstring Usage</div></a>
+      </div>
+    </article>
+
+    <!-- Loadstring guide -->
+    <article class="doc-page" id="loadstring">
+      <div class="breadcrumb"><span>Guides</span><span class="sep">/</span><span class="cur">Loadstring Usage</span></div>
+      <h1>Loadstring Usage</h1>
+      <p class="lead">Distribute your script as a one-line loadstring. The executor fetches, and the API returns obfuscated Lua.</p>
+      <h2 id="free">Free key</h2>
+      <div class="code-wrap"><div class="code-head"><span class="fname">Lua</span><button class="copy-btn">Copy</button></div>
+      <pre><code><span class="tok-fn">loadstring</span><span class="tok-punc">(</span><span class="tok-fn">game</span><span class="tok-punc">:</span><span class="tok-fn">HttpGet</span><span class="tok-punc">(</span>
+  <span class="tok-str">"https://apocalypsehub.com/api/scripts/serve/SCRIPT_ID?key=KEY"</span>
+<span class="tok-punc">))()</span></code></pre></div>
+      <h2 id="paid">Paid key (account-bound)</h2>
+      <div class="code-wrap"><div class="code-head"><span class="fname">Lua</span><button class="copy-btn">Copy</button></div>
+      <pre><code><span class="tok-fn">loadstring</span><span class="tok-punc">(</span><span class="tok-fn">game</span><span class="tok-punc">:</span><span class="tok-fn">HttpGet</span><span class="tok-punc">(</span>
+  <span class="tok-str">"https://apocalypsehub.com/api/scripts/serve/SCRIPT_ID?key=KEY&amp;uid=USER_ID"</span>
+<span class="tok-punc">))()</span></code></pre></div>
+      <div class="callout success"><span class="ico">✅</span><p>The <code>uid</code> ties the key to the owner's account — the key only works when the two match.</p></div>
+      <div class="page-nav">
+        <a data-page="key-system"><div class="dir">← Prev</div><div class="ttl">Key System</div></a>
+        <a class="next" data-page="obfuscation"><div class="dir">Next →</div><div class="ttl">Obfuscation Pipeline</div></a>
+      </div>
+    </article>
+
+    <!-- Obfuscation guide -->
+    <article class="doc-page" id="obfuscation">
+      <div class="breadcrumb"><span>Guides</span><span class="sep">/</span><span class="cur">Obfuscation Pipeline</span></div>
+      <h1>Obfuscation Pipeline</h1>
+      <p class="lead">Every served script passes through a four-stage Lua obfuscator before it leaves the server.</p>
+      <table class="params"><thead><tr><th>Stage</th><th>What it does</th></tr></thead><tbody>
+        <tr><td>encodeStrings</td><td>Converts string literals into character-code arrays.</td></tr>
+        <tr><td>addJunkCode</td><td>Inserts dummy variables and dead branches.</td></tr>
+        <tr><td>renameVariables</td><td>Rewrites locals, e.g. <code>local x</code> → <code>_lIlI0</code>.</td></tr>
+        <tr><td>wrapInExecutor</td><td>Wraps everything in a closed function guarded by a token.</td></tr>
+      </tbody></table>
+      <div class="callout warning"><span class="ico">⚠️</span><p><strong>Obfuscation is friction, not security.</strong> The full script still reaches the executor, so a determined user can reverse it. Rely on key validation and HWID binding for access control — treat obfuscation as deterrence for casual copying.</p></div>
+      <div class="page-nav">
+        <a data-page="loadstring"><div class="dir">← Prev</div><div class="ttl">Loadstring Usage</div></a>
+        <span></span>
+      </div>
+    </article>
+
+  </main>
+
+  <!-- ===== Right TOC ===== -->
+  <aside class="toc" id="toc">
+    <div class="toc-title">On this page</div>
+    <div id="tocList"></div>
+  </aside>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

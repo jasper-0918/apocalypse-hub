@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "apoc-docs",
+      "runtimeExecutable": "C:\\Users\\jaspe\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "runtimeArgs": ["-m", "http.server", "4321", "--directory", "Apocalypse Hub"],
+      "port": 4321
+    }
+  ]
+}

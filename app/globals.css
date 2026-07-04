@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 4%;
+    --foreground: 0 0% 96%;
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 96%;
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 0 72% 51%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 6% 14%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 240 6% 14%;
+    --muted-foreground: 240 5% 55%;
+    --accent: 240 6% 14%;
+    --accent-foreground: 0 0% 96%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 6% 18%;
+    --input: 240 6% 18%;
+    --ring: 0 72% 51%;
+    --chart-1: 0 72% 51%;
+    --chart-2: 220 70% 50%;
+    --chart-3: 160 60% 45%;
+    --chart-4: 30 80% 55%;
+    --chart-5: 43 74% 66%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .glow-red {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.15), 0 0 60px rgba(239, 68, 68, 0.05);
+  }
+  .glow-red-strong {
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.3), 0 0 80px rgba(239, 68, 68, 0.1);
+  }
+  .text-glow-red {
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.5), 0 0 40px rgba(239, 68, 68, 0.2);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(240 10% 6%);
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(240 6% 18%);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(240 6% 24%);
+}
