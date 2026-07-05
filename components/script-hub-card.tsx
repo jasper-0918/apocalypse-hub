@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { Eye, Key, Gamepad2 } from 'lucide-react';
 import { timeAgo, formatCount } from '@/lib/utils';
+import { gameTheme } from '@/lib/games';
 
 export interface HubScript {
   id: string;
@@ -10,13 +12,14 @@ export interface HubScript {
   slug: string;
   game: string;
   games?: string[];
+  thumbnail_url?: string | null;
   view_count?: number;
   is_protected?: boolean;
   created_at: string;
   owner_username?: string;
 }
 
-// A few tasteful gradients keyed off the script name so cards vary like ScriptBlox.
+// Fallback gradients keyed off the script name so covers vary like ScriptBlox.
 const GRADIENTS = [
   'from-red-900/60 via-zinc-900 to-black',
   'from-purple-900/60 via-zinc-900 to-black',
@@ -26,14 +29,48 @@ const GRADIENTS = [
   'from-fuchsia-900/50 via-zinc-900 to-black',
 ];
 
-function gradientFor(name: string) {
+function hashGradient(name: string) {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
   return GRADIENTS[hash % GRADIENTS.length];
 }
 
+/** The universal default cover: a Roblox-style tilted emblem over a themed
+ *  gradient, with the script name. Used when no thumbnail is uploaded. */
+export function ThumbnailFallback({ name, game, big }: { name: string; game?: string; big?: boolean }) {
+  const theme = gameTheme(game);
+  const gradient = theme?.gradient ?? hashGradient(name);
+  return (
+    <div className={`absolute inset-0 bg-gradient-to-br ${gradient} flex flex-col items-center justify-center gap-2`}>
+      <RobloxEmblem className={big ? 'h-16 w-16' : 'h-9 w-9'} />
+      <span className={`px-4 text-center font-extrabold uppercase tracking-wide text-white/85 drop-shadow ${big ? 'text-2xl line-clamp-3' : 'text-sm line-clamp-2'}`}>
+        {name}
+      </span>
+    </div>
+  );
+}
+
+/** Roblox-style tilted rounded-square emblem (original, brand-evoking). */
+export function RobloxEmblem({ className = 'h-9 w-9' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
+      <defs>
+        <linearGradient id="roblox-emblem" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#ff4b4b" />
+          <stop offset="100%" stopColor="#c81e1e" />
+        </linearGradient>
+      </defs>
+      <g transform="rotate(12 24 24)">
+        <rect x="8" y="8" width="32" height="32" rx="7" fill="url(#roblox-emblem)" />
+        <rect x="20" y="20" width="8" height="8" rx="2" fill="#0b0b0f" />
+      </g>
+    </svg>
+  );
+}
+
 export function ScriptHubCard({ script }: { script: HubScript }) {
-  const gradient = gradientFor(script.name);
+  const [imgOk, setImgOk] = useState(true);
+  const showImage = !!script.thumbnail_url && imgOk;
 
   return (
     <Link
@@ -41,10 +78,19 @@ export function ScriptHubCard({ script }: { script: HubScript }) {
       className="group block overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-red-900/40"
     >
       {/* Thumbnail */}
-      <div className={`relative aspect-video w-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
-        <span className="px-4 text-center text-lg font-extrabold uppercase tracking-wide text-white/85 line-clamp-2 drop-shadow">
-          {script.name}
-        </span>
+      <div className="relative aspect-video w-full overflow-hidden bg-black">
+        {showImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={script.thumbnail_url as string}
+            alt={script.name}
+            loading="lazy"
+            onError={() => setImgOk(false)}
+            className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-105"
+          />
+        ) : (
+          <ThumbnailFallback name={script.name} game={script.game} />
+        )}
 
         {/* Views (top-left) */}
         <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white backdrop-blur">

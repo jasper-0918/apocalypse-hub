@@ -5,7 +5,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { reactionIdentity, fetchReactionState } from '@/lib/reactions';
 
 const RICH =
-  'id, name, slug, description, game, games, view_count, is_protected, is_published, created_at, updated_at, owner_id, users!scripts_owner_id_fkey(username)';
+  'id, name, slug, description, game, games, thumbnail_url, view_count, is_protected, is_published, created_at, updated_at, owner_id, users!scripts_owner_id_fkey(username)';
 const LEGACY =
   'id, name, description, game, is_protected, is_published, created_at, updated_at, owner_id, users!scripts_owner_id_fkey(username)';
 
@@ -63,6 +63,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     description: script.description || '',
     game: script.game || games[0],
     games,
+    thumbnail_url: script.thumbnail_url ?? null,
     view_count: (script.view_count ?? 0) + 1,
     is_protected: script.is_protected,
     created_at: script.created_at,

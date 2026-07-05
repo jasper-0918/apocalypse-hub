@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { ScriptHubCard, HubScript } from '@/components/script-hub-card';
+import { ScriptHubCard, ThumbnailFallback, HubScript } from '@/components/script-hub-card';
 import { SiteHeader } from '@/components/site-header';
 import { timeAgo, formatCount } from '@/lib/utils';
 import {
@@ -48,6 +48,7 @@ export default function ScriptDetailPage({ params }: { params: { slug: string } 
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [thumbError, setThumbError] = useState(false);
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [showGames, setShowGames] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -145,7 +146,6 @@ export default function ScriptDetailPage({ params }: { params: { slug: string } 
     setPosting(false);
   };
 
-  const gradient = 'from-red-900/60 via-zinc-900 to-black';
   const longDesc = (script?.description?.length ?? 0) > 220;
 
   return (
@@ -175,10 +175,18 @@ export default function ScriptDetailPage({ params }: { params: { slug: string } 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               {/* Preview */}
               <Card className="bg-card border-border overflow-hidden">
-                <div className={`relative aspect-video w-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
-                  <span className="px-6 text-center text-2xl font-extrabold uppercase tracking-wide text-white/85 line-clamp-3 drop-shadow">
-                    {script.name}
-                  </span>
+                <div className="relative aspect-video w-full overflow-hidden bg-black">
+                  {script.thumbnail_url && !thumbError ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={script.thumbnail_url}
+                      alt={script.name}
+                      onError={() => setThumbError(true)}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  ) : (
+                    <ThumbnailFallback name={script.name} game={script.game} big />
+                  )}
                   <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur">
                     <Eye className="h-3.5 w-3.5" /> {formatCount(script.view_count ?? 0)} Views
                   </div>

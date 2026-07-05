@@ -61,6 +61,7 @@ export async function PATCH(
     if (body.isPublished !== undefined) updates.is_published = body.isPublished;
     if (body.name !== undefined) updates.name = body.name;
     if (body.description !== undefined) updates.description = body.description;
+    if (body.thumbnailUrl !== undefined) updates.thumbnail_url = body.thumbnailUrl || null;
     if (Array.isArray(body.games)) {
       const games = Array.from(
         new Set(body.games.map((g: any) => (typeof g === 'string' ? g.trim() : '')).filter(Boolean))

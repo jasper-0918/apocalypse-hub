@@ -8,7 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Lock, Loader2, CheckCircle, Copy, ArrowLeft, Plus, X, Gamepad2 } from 'lucide-react';
+import { ThumbnailFallback } from '@/components/script-hub-card';
+import { isFamousGame } from '@/lib/games';
+import { Lock, Loader2, CheckCircle, Copy, ArrowLeft, Plus, X, Gamepad2, ImagePlus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
 const DEFAULT_GAMES = ['Universal', 'Blox Fruits', 'Pet Simulator X', 'Murder Mystery 2', 'Da Hood', 'Arsenal', 'Adopt Me!', 'Doors', 'Brookhaven'];
@@ -19,6 +21,9 @@ export default function UploadScriptPage() {
   const [content, setContent] = useState('');
   const [games, setGames] = useState<string[]>(['Universal']);
   const [gameInput, setGameInput] = useState('');
+  const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [uploadingThumb, setUploadingThumb] = useState(false);
+  const [thumbError, setThumbError] = useState('');
   const [isPublished, setIsPublished] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ loadstring?: string; slug?: string; error?: string } | null>(null);
@@ -43,6 +48,27 @@ export default function UploadScriptPage() {
 
   const removeGame = (g: string) => setGames((prev) => prev.filter((x) => x !== g));
 
+  const uploadThumb = async (file: File) => {
+    setThumbError('');
+    setUploadingThumb(true);
+    try {
+      const token = localStorage.getItem('ah_session');
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/scripts/thumbnail', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const data = await res.json();
+      if (res.ok) setThumbnailUrl(data.url);
+      else setThumbError(data.error || 'Upload failed.');
+    } catch {
+      setThumbError('Upload failed. Please try again.');
+    }
+    setUploadingThumb(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (games.length === 0) {
@@ -60,7 +86,7 @@ export default function UploadScriptPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ name, description, content, games, isPublished }),
+        body: JSON.stringify({ name, description, content, games, thumbnailUrl, isPublished }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -173,6 +199,60 @@ export default function UploadScriptPage() {
                 </div>
               )}
               <p className="text-xs text-muted-foreground">The first game is the primary one shown on the card. Add more for universal or multi-game scripts.</p>
+            </div>
+
+            {/* Thumbnail / cover image */}
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Thumbnail (optional)</Label>
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Live preview */}
+                <div className="relative aspect-video w-full sm:w-64 shrink-0 overflow-hidden rounded-lg border border-border bg-black">
+                  {thumbnailUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={thumbnailUrl} alt="Thumbnail preview" className="absolute inset-0 h-full w-full object-cover" />
+                  ) : (
+                    <ThumbnailFallback name={name || 'Your Script'} game={games[0]} />
+                  )}
+                </div>
+
+                <div className="flex-1 space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/gif"
+                        className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadThumb(f); e.currentTarget.value = ''; }}
+                      />
+                      <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary px-3 py-2 text-sm text-foreground hover:bg-secondary/70">
+                        {uploadingThumb ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                        {uploadingThumb ? 'Uploading…' : 'Upload image'}
+                      </span>
+                    </label>
+                    {thumbnailUrl && (
+                      <Button type="button" variant="outline" size="sm" className="text-red-400 hover:bg-red-500/10" onClick={() => setThumbnailUrl('')}>
+                        <Trash2 className="h-4 w-4 mr-1" /> Remove
+                      </Button>
+                    )}
+                  </div>
+                  <Input
+                    type="url"
+                    value={thumbnailUrl}
+                    onChange={(e) => setThumbnailUrl(e.target.value)}
+                    className="bg-secondary border-border"
+                    placeholder="…or paste an image URL"
+                  />
+                  {thumbError && <p className="text-xs text-red-400">{thumbError}</p>}
+                  <p className="text-xs text-muted-foreground">
+                    PNG/JPG/WebP/GIF, up to 3MB.{' '}
+                    {!thumbnailUrl && isFamousGame(games[0])
+                      ? `No image? We'll use a recommended ${games[0]} cover automatically.`
+                      : !thumbnailUrl
+                      ? "No image? A default Roblox-style cover is used automatically."
+                      : ''}
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">

@@ -4,7 +4,7 @@ import { createServerClient } from '@/lib/supabase/server';
 export const dynamic = 'force-dynamic';
 
 const RICH_COLUMNS =
-  'id, name, slug, description, game, games, view_count, is_protected, created_at, owner_id, users!scripts_owner_id_fkey(username)';
+  'id, name, slug, description, game, games, thumbnail_url, view_count, is_protected, created_at, owner_id, users!scripts_owner_id_fkey(username)';
 const LEGACY_COLUMNS =
   'id, name, description, game, is_protected, created_at, owner_id, users!scripts_owner_id_fkey(username)';
 
@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
     description: s.description,
     game: s.game || 'Universal',
     games: Array.isArray(s.games) && s.games.length ? s.games : [s.game || 'Universal'],
+    thumbnail_url: s.thumbnail_url ?? null,
     view_count: s.view_count ?? 0,
     is_protected: s.is_protected,
     created_at: s.created_at,

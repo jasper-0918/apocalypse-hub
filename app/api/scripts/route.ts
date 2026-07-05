@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
     const obfuscatedHash = createHash('sha256').update(content).digest('hex');
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || req.nextUrl.origin;
     const slug = buildScriptSlug(name, randomUUID());
+    const thumbnailUrl = typeof body.thumbnailUrl === 'string' && body.thumbnailUrl.trim() ? body.thumbnailUrl.trim() : null;
 
     const baseRow = {
       name,
@@ -83,12 +84,15 @@ export async function POST(req: NextRequest) {
       owner_id: user.id,
     };
 
-    // Try inserting with the multi-game array; if the `games` column doesn't
-    // exist yet (migration 014 not applied), fall back to the base row so
-    // uploads keep working during the migration window.
+    // The `games` (migration 014) and `thumbnail_url` (migration 015) columns
+    // are added later, so try the richest insert first and progressively fall
+    // back so uploads keep working during any migration window.
+    const richRow: Record<string, any> = { ...baseRow, games };
+    if (thumbnailUrl) richRow.thumbnail_url = thumbnailUrl;
+
     let { data: script, error } = await supabase
       .from('scripts')
-      .insert({ ...baseRow, games })
+      .insert(richRow)
       .select()
       .single();
 
