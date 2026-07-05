@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
       .limit(5),
   ]);
 
-  const planBreakdown = { FREE: 0, PRO: 0, SCRIPTER: 0, DEVELOPER: 0 };
+  const planBreakdown = { FREE: 0, SCRIPTER: 0 };
   (planCounts || []).forEach((u: any) => {
     if (u.plan in planBreakdown) planBreakdown[u.plan as keyof typeof planBreakdown]++;
   });

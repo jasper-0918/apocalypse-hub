@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUser, createSessionToken } from '@/lib/auth';
+import { createServerClient } from '@/lib/supabase/server';
 import { loginSchema } from '@/lib/validators';
 
 export async function POST(req: NextRequest) {
@@ -22,6 +23,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
+      );
+    }
+
+    // Block sign-in until the email is verified.
+    const supabase = createServerClient();
+    const { data: row } = await supabase
+      .from('users')
+      .select('email_verified')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (row && row.email_verified === false) {
+      return NextResponse.json(
+        { error: 'Please verify your email first.', needsVerification: true, email: user.email },
+        { status: 403 }
       );
     }
 

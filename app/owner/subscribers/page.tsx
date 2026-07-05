@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Loader2, Search, CreditCard, Zap, Code2, Crown } from 'lucide-react';
+import { Loader2, Search, Code2 } from 'lucide-react';
 
 interface Subscriber {
   id: string;
@@ -13,13 +13,10 @@ interface Subscriber {
   plan: string;
   role: string;
   created_at: string;
-  stripe_customer_id: string | null;
 }
 
 const PLAN_STYLE: Record<string, { color: string; icon: any }> = {
-  PRO: { color: 'bg-sky-600/20 text-sky-400', icon: Zap },
   SCRIPTER: { color: 'bg-emerald-600/20 text-emerald-400', icon: Code2 },
-  DEVELOPER: { color: 'bg-red-600/20 text-red-400', icon: Crown },
 };
 
 export default function SubscribersPage() {
@@ -51,23 +48,18 @@ export default function SubscribersPage() {
         <p className="text-muted-foreground">Users on paid plans</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        {(['PRO', 'SCRIPTER', 'DEVELOPER'] as const).map((plan) => {
-          const { color, icon: Icon } = PLAN_STYLE[plan];
-          return (
-            <Card key={plan} className="bg-card border-border">
-              <CardContent className="pt-5 pb-4 flex items-center gap-4">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${color.replace('text-', 'bg-').replace('400', '500/10')}`}>
-                  <Icon className={`h-5 w-5 ${color.split(' ')[1]}`} />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{planCount(plan)}</p>
-                  <p className="text-xs text-muted-foreground">{plan}</p>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <Card className="bg-card border-border">
+          <CardContent className="pt-5 pb-4 flex items-center gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
+              <Code2 className="h-5 w-5 text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-foreground">{planCount('SCRIPTER')}</p>
+              <p className="text-xs text-muted-foreground">Scripter Subscribers</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card className="bg-card border-border">
@@ -101,7 +93,6 @@ export default function SubscribersPage() {
                   <tr className="border-b border-border text-muted-foreground">
                     <th className="text-left py-2 pr-4 font-medium">User</th>
                     <th className="text-left py-2 pr-4 font-medium">Plan</th>
-                    <th className="text-left py-2 pr-4 font-medium">Stripe</th>
                     <th className="text-left py-2 font-medium">Joined</th>
                   </tr>
                 </thead>
@@ -118,16 +109,6 @@ export default function SubscribersPage() {
                           <Badge className={`border-0 text-xs ${style?.color || 'bg-zinc-600/20 text-zinc-400'}`}>
                             {s.plan}
                           </Badge>
-                        </td>
-                        <td className="py-3 pr-4">
-                          {s.stripe_customer_id ? (
-                            <div className="flex items-center gap-1.5 text-xs text-emerald-400">
-                              <CreditCard className="h-3.5 w-3.5" />
-                              Active
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
                         </td>
                         <td className="py-3 text-xs text-muted-foreground">
                           {new Date(s.created_at).toLocaleDateString()}

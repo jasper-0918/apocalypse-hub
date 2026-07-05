@@ -51,7 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Login failed');
+    if (!res.ok) {
+      if (data.needsVerification) {
+        router.push(`/verify?email=${encodeURIComponent(data.email)}`);
+        return;
+      }
+      throw new Error(data.error || 'Login failed');
+    }
     localStorage.setItem('ah_session', data.token);
     setUser(data.user);
     if (data.user?.role === 'OWNER') router.push('/owner');
@@ -67,6 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Registration failed');
+    if (data.needsVerification) {
+      router.push(`/verify?email=${encodeURIComponent(data.email)}`);
+      return;
+    }
     localStorage.setItem('ah_session', data.token);
     setUser(data.user);
     router.push('/dashboard');

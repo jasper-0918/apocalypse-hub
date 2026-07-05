@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, FileCode2, KeyRound, Zap, Ticket, Crown, Code2, Star } from 'lucide-react';
+import { Users, FileCode2, KeyRound, Zap, Ticket, Code2, Star } from 'lucide-react';
 
 interface Stats {
   totalUsers: number;
@@ -11,16 +11,15 @@ interface Stats {
   totalKeys: number;
   activeKeys: number;
   openTickets: number;
-  planBreakdown: { FREE: number; PRO: number; SCRIPTER: number; DEVELOPER: number };
+  planBreakdown: { FREE: number; SCRIPTER: number };
   recentUsers: any[];
 }
 
 const PLAN_COLOR: Record<string, string> = {
   FREE: 'bg-zinc-600/20 text-zinc-400',
-  PRO: 'bg-sky-600/20 text-sky-400',
   SCRIPTER: 'bg-emerald-600/20 text-emerald-400',
-  DEVELOPER: 'bg-red-600/20 text-red-400',
   OWNER: 'bg-amber-600/20 text-amber-400',
+  ADMIN: 'bg-red-600/20 text-red-400',
 };
 
 export default function OwnerPage() {
@@ -52,9 +51,7 @@ export default function OwnerPage() {
 
   const planCards = [
     { plan: 'FREE', count: stats.planBreakdown.FREE, icon: Star, color: 'text-zinc-400' },
-    { plan: 'PRO', count: stats.planBreakdown.PRO, icon: Zap, color: 'text-sky-400' },
     { plan: 'SCRIPTER', count: stats.planBreakdown.SCRIPTER, icon: Code2, color: 'text-emerald-400' },
-    { plan: 'DEVELOPER', count: stats.planBreakdown.DEVELOPER, icon: Crown, color: 'text-red-400' },
   ];
 
   return (
