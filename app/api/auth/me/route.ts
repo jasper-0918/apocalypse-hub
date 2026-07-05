@@ -8,13 +8,23 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const supabase = createServerClient();
+  // Read role/plan fresh from the DB so upgrades and role changes reflect on
+  // refresh without forcing a re-login (the token payload can be stale).
   const { data: row } = await supabase
     .from('users')
-    .select('key_expiry_hours')
+    .select('role, plan, username, key_expiry_hours')
     .eq('id', user.id)
     .maybeSingle();
 
-  return NextResponse.json({ user: { ...user, key_expiry_hours: row?.key_expiry_hours ?? 12 } });
+  return NextResponse.json({
+    user: {
+      ...user,
+      role: row?.role ?? user.role,
+      plan: row?.plan ?? user.plan,
+      username: row?.username ?? user.username,
+      key_expiry_hours: row?.key_expiry_hours ?? 12,
+    },
+  });
 }
 
 export async function PATCH(req: NextRequest) {
