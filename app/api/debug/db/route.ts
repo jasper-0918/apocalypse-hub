@@ -35,5 +35,16 @@ export async function GET() {
   const usersProbe = await s.from('users').select('balance_usd', { count: 'exact', head: true });
   out.users_balance_col_error = usersProbe.error?.message ?? null;
 
+  // Probe an actual user insert (then clean it up) to surface the real error.
+  const diagEmail = 'diag_' + Date.now() + '@example.com';
+  const ui = await s
+    .from('users')
+    .insert({ email: diagEmail, username: 'diag' + Date.now().toString().slice(-8), password_hash: 'x' })
+    .select('id, role, plan')
+    .maybeSingle();
+  out.users_insertError = ui.error?.message ?? null;
+  out.users_inserted = ui.data ?? null;
+  if (ui.data?.id) await s.from('users').delete().eq('id', ui.data.id);
+
   return NextResponse.json(out);
 }
