@@ -7,7 +7,7 @@ import { Flame, ArrowLeft, Info } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
 
-const PAID_PLANS = ['PRO', 'SCRIPTER', 'DEVELOPER'];
+const PAID_PLANS = ['SCRIPTER'];
 
 export default function GetKeyPage() {
   const router = useRouter();
