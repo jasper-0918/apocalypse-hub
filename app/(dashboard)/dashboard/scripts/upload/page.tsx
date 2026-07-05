@@ -113,16 +113,20 @@ export default function UploadScriptPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-muted-foreground">Game</Label>
-                <Select value={game} onValueChange={setGame}>
-                  <SelectTrigger className="bg-secondary border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {games.map((g) => (
-                      <SelectItem key={g} value={g}>{g}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  type="text"
+                  list="game-suggestions"
+                  value={game}
+                  onChange={(e) => setGame(e.target.value)}
+                  className="bg-secondary border-border"
+                  placeholder="Type any game (e.g. Blox Fruits)"
+                />
+                <datalist id="game-suggestions">
+                  {games.map((g) => (
+                    <option key={g} value={g} />
+                  ))}
+                </datalist>
+                <p className="text-xs text-muted-foreground">Pick a suggestion or type the game your script is for.</p>
               </div>
               <div className="space-y-2">
                 <Label className="text-muted-foreground">Category</Label>
