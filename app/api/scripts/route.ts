@@ -71,24 +71,36 @@ export async function POST(req: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://apocalypsehub.com';
     const slug = buildScriptSlug(name, randomUUID());
 
-    const { data: script, error } = await supabase
+    const baseRow = {
+      name,
+      description,
+      original_content: content,
+      obfuscated_hash: obfuscatedHash,
+      is_protected: true,
+      is_published: isPublished,
+      game,
+      slug,
+      owner_id: user.id,
+    };
+
+    // Try inserting with the multi-game array; if the `games` column doesn't
+    // exist yet (migration 014 not applied), fall back to the base row so
+    // uploads keep working during the migration window.
+    let { data: script, error } = await supabase
       .from('scripts')
-      .insert({
-        name,
-        description,
-        original_content: content,
-        obfuscated_hash: obfuscatedHash,
-        is_protected: true,
-        is_published: isPublished,
-        game,
-        games,
-        slug,
-        owner_id: user.id,
-      })
+      .insert({ ...baseRow, games })
       .select()
       .single();
 
     if (error) {
+      ({ data: script, error } = await supabase
+        .from('scripts')
+        .insert(baseRow)
+        .select()
+        .single());
+    }
+
+    if (error || !script) {
       return NextResponse.json({ error: 'Failed to create script' }, { status: 500 });
     }
 
