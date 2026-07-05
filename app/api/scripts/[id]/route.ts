@@ -61,8 +61,18 @@ export async function PATCH(
     if (body.isPublished !== undefined) updates.is_published = body.isPublished;
     if (body.name !== undefined) updates.name = body.name;
     if (body.description !== undefined) updates.description = body.description;
-    if (body.game !== undefined) updates.game = body.game;
-    if (body.category !== undefined) updates.category = body.category;
+    if (Array.isArray(body.games)) {
+      const games = Array.from(
+        new Set(body.games.map((g: any) => (typeof g === 'string' ? g.trim() : '')).filter(Boolean))
+      ).slice(0, 20) as string[];
+      if (games.length) {
+        updates.games = games;
+        updates.game = games[0];
+      }
+    } else if (body.game !== undefined) {
+      updates.game = body.game;
+      updates.games = [body.game];
+    }
 
     const { data: updated } = await supabase
       .from('scripts')

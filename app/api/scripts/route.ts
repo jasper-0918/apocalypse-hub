@@ -6,6 +6,8 @@ import { createHash } from 'crypto';
 import { obfuscateLua, generateLoadstringSnippet } from '@/lib/obfuscator';
 import { effectiveScriptLimit } from '@/lib/plans';
 import { scriptUploadSchema } from '@/lib/validators';
+import { buildScriptSlug } from '@/lib/utils';
+import { randomUUID } from 'crypto';
 
 export async function POST(req: NextRequest) {
   const user = await getUserFromRequest(req);
@@ -50,11 +52,24 @@ export async function POST(req: NextRequest) {
     }
 
     const { name, description, content } = parsed.data;
-    const game = body.game || 'Universal';
-    const category = body.category || 'general';
+
+    // Supported games: accept an array (new UI) and fall back to the single
+    // `game` field for older clients. The first game is stored as the primary.
+    const rawGames: string[] = Array.isArray(body.games) ? body.games : [];
+    const games = Array.from(
+      new Set(
+        rawGames
+          .map((g) => (typeof g === 'string' ? g.trim() : ''))
+          .filter(Boolean)
+      )
+    ).slice(0, 20);
+    if (games.length === 0) games.push((body.game || 'Universal').trim() || 'Universal');
+    const game = games[0];
+
     const isPublished = body.isPublished ?? false;
     const obfuscatedHash = createHash('sha256').update(content).digest('hex');
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://apocalypsehub.com';
+    const slug = buildScriptSlug(name, randomUUID());
 
     const { data: script, error } = await supabase
       .from('scripts')
@@ -66,7 +81,8 @@ export async function POST(req: NextRequest) {
         is_protected: true,
         is_published: isPublished,
         game,
-        category,
+        games,
+        slug,
         owner_id: user.id,
       })
       .select()
@@ -97,6 +113,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       id: script.id,
       name: script.name,
+      slug: script.slug,
       loadstring: generateLoadstringSnippet(script.id, baseUrl),
       message: 'Script uploaded and protected successfully.',
     });
@@ -113,7 +130,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServerClient();
   const { data: scripts } = await supabase
     .from('scripts')
-    .select('id, name, description, is_protected, is_published, game, category, created_at, updated_at')
+    .select('id, name, slug, description, is_protected, is_published, game, games, view_count, created_at, updated_at')
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false });
 

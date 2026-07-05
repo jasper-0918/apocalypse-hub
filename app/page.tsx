@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { ScriptHubCard, HubScript } from '@/components/script-hub-card';
 import {
   Flame,
   Shield,
@@ -12,39 +12,32 @@ import {
   Key,
   Search,
   Copy,
-  CheckCircle,
-  Gamepad2,
   Eye,
   Loader2,
+  Users,
+  BookOpen,
+  Rocket,
+  TrendingUp,
+  Clock,
 } from 'lucide-react';
 import Link from 'next/link';
 
-interface CatalogScript {
-  id: string;
-  name: string;
-  description: string | null;
-  game: string;
-  category: string;
-  is_protected: boolean;
-  created_at: string;
-  owner_username: string;
-}
-
 export default function HomePage() {
-  const [scripts, setScripts] = useState<CatalogScript[]>([]);
+  const [scripts, setScripts] = useState<HubScript[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeGame, setActiveGame] = useState('All');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [sort, setSort] = useState<'recent' | 'trending'>('recent');
   const [games, setGames] = useState<string[]>(['All']);
-  const [paidKeyInfo, setPaidKeyInfo] = useState<{ key: string; uid: string } | null>(null);
 
   useEffect(() => {
     const fetchScripts = async () => {
+      setLoading(true);
       try {
         const params = new URLSearchParams();
         if (search) params.set('search', search);
         if (activeGame !== 'All') params.set('game', activeGame);
+        if (sort === 'trending') params.set('sort', 'trending');
         const res = await fetch(`/api/scripts/catalog?${params}`);
         if (res.ok) setScripts(await res.json());
       } catch {
@@ -53,48 +46,17 @@ export default function HomePage() {
       setLoading(false);
     };
     fetchScripts();
-  }, [search, activeGame]);
-
-  useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('ah_session') : null;
-    if (!token) return;
-    fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.ok ? r.json() : null)
-      .then((meData) => {
-        if (!meData?.user) return;
-        const PAID = ['SCRIPTER'];
-        if (!PAID.includes(meData.user.plan) && meData.user.role !== 'OWNER') return;
-        return fetch('/api/keys/paid', { headers: { Authorization: `Bearer ${token}` } })
-          .then((r) => r.ok ? r.json() : null)
-          .then((keyData) => {
-            if (keyData?.key?.value) {
-              setPaidKeyInfo({ key: keyData.key.value, uid: meData.user.id });
-            }
-          });
-      })
-      .catch(() => {});
-  }, []);
+  }, [search, activeGame, sort]);
 
   useEffect(() => {
     fetch('/api/owner/games')
-      .then((r) => r.ok ? r.json() : [])
+      .then((r) => (r.ok ? r.json() : []))
       .then((data: any[]) => {
         const names = data.filter((g) => g.is_active).map((g: any) => g.name);
         if (names.length > 0) setGames(['All', ...names]);
       })
       .catch(() => {});
   }, []);
-
-  const copyLoadstring = (scriptId: string) => {
-    const baseUrl = window.location.origin;
-    const keyPart = paidKeyInfo
-      ? `${paidKeyInfo.key}&uid=${paidKeyInfo.uid}`
-      : 'YOUR_KEY_HERE';
-    const snippet = `loadstring(game:HttpGet("${baseUrl}/api/scripts/serve/${scriptId}?key=${keyPart}"))()`;
-    navigator.clipboard.writeText(snippet);
-    setCopiedId(scriptId);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -121,51 +83,78 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Hero */}
+      {/* Hero + Search */}
       <section className="relative overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(239,68,68,0.06)_0%,_transparent_50%)]" />
-        <div className="relative max-w-6xl mx-auto px-4 py-12 text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight mb-3">
+        <div className="relative max-w-6xl mx-auto px-4 py-12">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight mb-3 text-center">
             Apocalypse <span className="text-red-500 text-glow-red">Hub</span>
           </h1>
-          <p className="text-muted-foreground text-lg mb-6 max-w-xl mx-auto">
-            Premium script hub protected by key system. Get your key, copy the loadstring, and execute.
+          <p className="text-muted-foreground text-lg mb-8 max-w-2xl mx-auto text-center">
+            Search the best Lua scripts, key-protected and obfuscated — uploaded by the community.
           </p>
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            <Link href="/get-key">
-              <Button className="bg-red-600 hover:bg-red-700 text-white font-semibold h-10 px-6 glow-red">
-                <Key className="mr-2 h-4 w-4" />
-                Get Free Key
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button variant="outline" className="border-border text-foreground h-10 px-6">
-                Upload Scripts
-              </Button>
-            </Link>
+
+          {/* Search bar */}
+          <div className="relative max-w-3xl mx-auto">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder='Try "Blox Fruits"'
+              className="pl-12 h-14 text-base bg-card border-border"
+            />
           </div>
-          <div className="flex items-center justify-center gap-6 mt-6 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5"><Shield className="h-4 w-4 text-red-400" /> Key Protected</span>
-            <span className="flex items-center gap-1.5"><Lock className="h-4 w-4 text-amber-400" /> Obfuscated</span>
-            <span className="flex items-center gap-1.5"><Gamepad2 className="h-4 w-4 text-emerald-400" /> {scripts.length} Scripts</span>
+
+          {/* Info cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+            {[
+              { icon: Users, title: 'Active community', text: 'Join thousands of people already sharing and using scripts every day.', color: 'text-red-400' },
+              { icon: BookOpen, title: 'Protected collection', text: 'Every script is key-locked and obfuscated, so your work stays yours.', color: 'text-amber-400' },
+              { icon: Rocket, title: 'Earn from your scripts', text: 'Upload, share, and get paid per unique key-system completion.', color: 'text-emerald-400' },
+            ].map((c) => (
+              <Card key={c.title} className="bg-card/60 border-border">
+                <CardContent className="p-5">
+                  <c.icon className={`h-6 w-6 ${c.color} mb-2`} />
+                  <h3 className="text-sm font-semibold text-foreground mb-1">{c.title}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{c.text}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Script Catalog */}
       <section className="max-w-6xl mx-auto px-4 py-8">
-        {/* Search + Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search scripts..."
-              className="pl-9 bg-card border-border h-10"
-            />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-foreground">
+              {sort === 'trending' ? 'Trending Scripts' : 'Recent Scripts'}
+            </h2>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Button
+              variant={sort === 'recent' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSort('recent')}
+              className={sort === 'recent' ? 'bg-red-600 hover:bg-red-700 text-white' : 'border-border text-muted-foreground'}
+            >
+              <Clock className="h-3.5 w-3.5 mr-1.5" /> Recent
+            </Button>
+            <Button
+              variant={sort === 'trending' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSort('trending')}
+              className={sort === 'trending' ? 'bg-red-600 hover:bg-red-700 text-white' : 'border-border text-muted-foreground'}
+            >
+              <TrendingUp className="h-3.5 w-3.5 mr-1.5" /> Trending
+            </Button>
+          </div>
+        </div>
+
+        {/* Game filter chips */}
+        {games.length > 1 && (
+          <div className="flex gap-2 flex-wrap mb-6">
             {games.map((game) => (
               <Button
                 key={game}
@@ -178,9 +167,9 @@ export default function HomePage() {
               </Button>
             ))}
           </div>
-        </div>
+        )}
 
-        {/* Script Grid */}
+        {/* Grid */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-red-500" />
@@ -189,7 +178,7 @@ export default function HomePage() {
           <Card className="bg-card border-border">
             <CardContent className="flex flex-col items-center justify-center py-20 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary mb-4">
-                <Gamepad2 className="h-8 w-8 text-muted-foreground" />
+                <Eye className="h-8 w-8 text-muted-foreground" />
               </div>
               <h2 className="text-xl font-semibold text-foreground mb-2">No scripts found</h2>
               <p className="text-muted-foreground max-w-md mb-4">
@@ -198,74 +187,14 @@ export default function HomePage() {
                   : 'No scripts have been published yet. Be the first to upload!'}
               </p>
               <Link href="/register">
-                <Button className="bg-red-600 hover:bg-red-700 text-white">
-                  Upload Scripts
-                </Button>
+                <Button className="bg-red-600 hover:bg-red-700 text-white">Upload Scripts</Button>
               </Link>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {scripts.map((script) => (
-              <Card key={script.id} className="bg-card border-border hover:border-red-900/30 transition-colors group">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-base text-foreground truncate">{script.name}</CardTitle>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <Badge variant="secondary" className="bg-secondary text-muted-foreground text-xs">
-                          <Gamepad2 className="h-3 w-3 mr-1" />
-                          {script.game}
-                        </Badge>
-                        <Badge className="bg-red-500/10 text-red-400 border-red-500/20 text-xs">
-                          <Shield className="h-3 w-3 mr-1" />
-                          Protected
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {script.description && (
-                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{script.description}</p>
-                  )}
-                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-                    <span>by {script.owner_username}</span>
-                    <span>{new Date(script.created_at).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    {!paidKeyInfo && (
-                      <Link href={`/get-key?scriptId=${script.id}`} className="flex-1">
-                        <Button
-                          size="sm"
-                          className="w-full bg-red-600 hover:bg-red-700 text-white"
-                        >
-                          <Key className="mr-1.5 h-3.5 w-3.5" />
-                          Get Key
-                        </Button>
-                      </Link>
-                    )}
-                    <Button
-                      onClick={() => copyLoadstring(script.id)}
-                      variant="outline"
-                      size="sm"
-                      className={`${paidKeyInfo ? 'w-full' : 'flex-1'} border-border text-foreground hover:bg-red-500/10 hover:text-red-400 hover:border-red-900/30`}
-                    >
-                      {copiedId === script.id ? (
-                        <>
-                          <CheckCircle className="mr-1.5 h-3.5 w-3.5 text-green-400" />
-                          <span className="text-green-400">Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="mr-1.5 h-3.5 w-3.5" />
-                          {paidKeyInfo ? 'Copy Loadstring' : 'Copy'}
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <ScriptHubCard key={script.id} script={script} />
             ))}
           </div>
         )}
@@ -280,14 +209,14 @@ export default function HomePage() {
               {
                 icon: Key,
                 title: '1. Get Your Key',
-                description: 'Complete a short task on Work.ink or Linkvertise to claim a free key. Keys unlock all scripts and are valid for all games.',
+                description: 'Complete a short task on Work.ink, Linkvertise, or Lootlabs to claim a free key that unlocks the scripts.',
                 color: 'text-red-400',
                 bg: 'bg-red-500/10 border-red-500/20',
               },
               {
                 icon: Copy,
                 title: '2. Copy Loadstring',
-                description: 'Browse the script catalog, click "Copy Loadstring", and replace YOUR_KEY_HERE with your key.',
+                description: 'Open any script page, copy the loadstring, and drop your key in place of YOUR_KEY_HERE.',
                 color: 'text-amber-400',
                 bg: 'bg-amber-500/10 border-amber-500/20',
               },
@@ -316,8 +245,8 @@ export default function HomePage() {
       {/* CTA for scripters */}
       <section className="border-t border-border">
         <div className="max-w-3xl mx-auto px-4 py-12 text-center">
-          <h2 className="text-2xl font-bold text-foreground mb-2">Protect Your Scripts</h2>
-          <p className="text-muted-foreground mb-6">Create an account to upload, obfuscate, and key-lock your Lua scripts.</p>
+          <h2 className="text-2xl font-bold text-foreground mb-2">Protect &amp; Sell Your Scripts</h2>
+          <p className="text-muted-foreground mb-6">Create an account to upload, obfuscate, key-lock, and earn from your Lua scripts.</p>
           <Link href="/register">
             <Button className="bg-red-600 hover:bg-red-700 text-white font-semibold h-11 px-8 glow-red">
               Create Account

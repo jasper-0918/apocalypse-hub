@@ -1,41 +1,54 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Lock, Loader2, CheckCircle, Copy, ArrowLeft } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Lock, Loader2, CheckCircle, Copy, ArrowLeft, Plus, X, Gamepad2 } from 'lucide-react';
 import Link from 'next/link';
+
+const DEFAULT_GAMES = ['Universal', 'Blox Fruits', 'Pet Simulator X', 'Murder Mystery 2', 'Da Hood', 'Arsenal', 'Adopt Me!', 'Doors', 'Brookhaven'];
 
 export default function UploadScriptPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [content, setContent] = useState('');
-  const [game, setGame] = useState('Universal');
-  const [category, setCategory] = useState('general');
+  const [games, setGames] = useState<string[]>(['Universal']);
+  const [gameInput, setGameInput] = useState('');
   const [isPublished, setIsPublished] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ loadstring?: string; error?: string } | null>(null);
-  const [games, setGames] = useState(['Universal', 'Blox Fruits', 'Pet Simulator X', 'Murder Mystery 2', 'Da Hood', 'Arsenal', 'Adopt Me!', 'Doors', 'Brookhaven']);
-  const router = useRouter();
+  const [result, setResult] = useState<{ loadstring?: string; slug?: string; error?: string } | null>(null);
+  const [suggestions, setSuggestions] = useState(DEFAULT_GAMES);
 
   useEffect(() => {
     fetch('/api/owner/games')
       .then((r) => r.ok ? r.json() : [])
       .then((data: any[]) => {
         const names = data.filter((g: any) => g.is_active).map((g: any) => g.name);
-        if (names.length > 0) setGames(names);
+        if (names.length > 0) setSuggestions(names);
       })
       .catch(() => {});
   }, []);
 
+  const addGame = (value: string) => {
+    const g = value.trim();
+    if (!g) return;
+    setGames((prev) => (prev.some((x) => x.toLowerCase() === g.toLowerCase()) ? prev : [...prev, g]));
+    setGameInput('');
+  };
+
+  const removeGame = (g: string) => setGames((prev) => prev.filter((x) => x !== g));
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (games.length === 0) {
+      setResult({ error: 'Add at least one supported game.' });
+      return;
+    }
     setLoading(true);
     setResult(null);
 
@@ -47,11 +60,11 @@ export default function UploadScriptPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ name, description, content, game, category, isPublished }),
+        body: JSON.stringify({ name, description, content, games, isPublished }),
       });
       const data = await res.json();
       if (res.ok) {
-        setResult({ loadstring: data.loadstring });
+        setResult({ loadstring: data.loadstring, slug: data.slug });
       } else {
         setResult({ error: data.error });
       }
@@ -110,40 +123,56 @@ export default function UploadScriptPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">Game</Label>
+            {/* Supported games — add as many as the script works for */}
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Supported Games</Label>
+              <div className="flex gap-2">
                 <Input
                   type="text"
                   list="game-suggestions"
-                  value={game}
-                  onChange={(e) => setGame(e.target.value)}
+                  value={gameInput}
+                  onChange={(e) => setGameInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addGame(gameInput);
+                    }
+                  }}
                   className="bg-secondary border-border"
-                  placeholder="Type any game (e.g. Blox Fruits)"
+                  placeholder="Type a game (e.g. Blox Fruits) and press Add"
                 />
                 <datalist id="game-suggestions">
-                  {games.map((g) => (
+                  {suggestions.map((g) => (
                     <option key={g} value={g} />
                   ))}
                 </datalist>
-                <p className="text-xs text-muted-foreground">Pick a suggestion or type the game your script is for.</p>
+                <Button
+                  type="button"
+                  onClick={() => addGame(gameInput)}
+                  className="bg-secondary hover:bg-secondary/70 text-foreground border border-border shrink-0"
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Add
+                </Button>
               </div>
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">Category</Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="bg-secondary border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="general">General</SelectItem>
-                    <SelectItem value="combat">Combat</SelectItem>
-                    <SelectItem value="movement">Movement</SelectItem>
-                    <SelectItem value="utility">Utility</SelectItem>
-                    <SelectItem value="gui">GUI</SelectItem>
-                    <SelectItem value="auto-farm">Auto Farm</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {games.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {games.map((g, i) => (
+                    <Badge
+                      key={g}
+                      variant="secondary"
+                      className="bg-red-500/10 text-red-300 border border-red-500/20 pl-2 pr-1 py-1 gap-1"
+                    >
+                      <Gamepad2 className="h-3 w-3" />
+                      {g}
+                      {i === 0 && <span className="text-[10px] uppercase text-muted-foreground ml-0.5">primary</span>}
+                      <button type="button" onClick={() => removeGame(g)} className="ml-0.5 rounded hover:bg-red-500/20 p-0.5">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">The first game is the primary one shown on the card. Add more for universal or multi-game scripts.</p>
             </div>
 
             <div className="space-y-2">
@@ -197,8 +226,14 @@ export default function UploadScriptPage() {
               <CheckCircle className="h-5 w-5" />
               Script uploaded successfully!
             </div>
-            {isPublished && (
-              <p className="text-sm text-emerald-400 mb-2">Published to the public hub catalog.</p>
+            {isPublished && result.slug && (
+              <p className="text-sm text-emerald-400 mb-2">
+                Published to the public hub —{' '}
+                <Link href={`/script/${result.slug}`} className="underline hover:text-emerald-300">
+                  view its page
+                </Link>
+                .
+              </p>
             )}
             <p className="text-muted-foreground text-sm mb-3">
               Use this loadstring in your Roblox game (replace YOUR_KEY_HERE with a valid key):
