@@ -7,9 +7,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { ScriptHubCard, HubScript } from '@/components/script-hub-card';
+import { SiteHeader } from '@/components/site-header';
 import { timeAgo, formatCount } from '@/lib/utils';
 import {
-  Flame, Key, Copy, CheckCircle, Download, ThumbsUp, ThumbsDown, Star,
+  Key, Copy, CheckCircle, Download, ThumbsUp, ThumbsDown, Star,
   AlertTriangle, Eye, Clock, Gamepad2, Loader2, User, MessageSquare, ArrowLeft,
 } from 'lucide-react';
 
@@ -149,25 +150,7 @@ export default function ScriptDetailPage({ params }: { params: { slug: string } 
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Flame className="h-7 w-7 text-red-500" />
-            <span className="text-xl font-bold text-foreground">Apocalypse Hub</span>
-          </Link>
-          <nav className="flex items-center gap-3">
-            <Link href="/get-key">
-              <Button variant="outline" size="sm" className="border-red-900/30 text-red-400 hover:bg-red-500/10 hover:text-red-300">
-                <Key className="mr-1.5 h-3.5 w-3.5" /> Get Key
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">Sign In</Button>
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
 
       <div className="max-w-6xl mx-auto px-4 py-6">
         <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">

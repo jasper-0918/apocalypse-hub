@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
 
     const isPublished = body.isPublished ?? false;
     const obfuscatedHash = createHash('sha256').update(content).digest('hex');
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://apocalypsehub.com';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || req.nextUrl.origin;
     const slug = buildScriptSlug(name, randomUUID());
 
     const baseRow = {

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { KeySystemGate } from '@/components/key-system-gate';
 import { Flame, ArrowLeft, Info } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { siteBaseUrl } from '@/lib/utils';
 import Link from 'next/link';
 
 const PAID_PLANS = ['SCRIPTER'];
@@ -66,8 +67,8 @@ export default function GetKeyPage() {
                 </p>
                 <p>
                   <span className="text-foreground font-medium">Loadstring format:</span>{' '}
-                  <code className="text-green-400 font-mono text-xs bg-secondary px-2 py-1 rounded block mt-1">
-                    loadstring(game:HttpGet(&quot;https://apocalypsehub.com/api/scripts/serve/SCRIPT_ID?key=YOUR_KEY&quot;))()
+                  <code className="text-green-400 font-mono text-xs bg-secondary px-2 py-1 rounded block mt-1 break-all">
+                    {`loadstring(game:HttpGet("${siteBaseUrl()}/api/scripts/serve/SCRIPT_ID?key=YOUR_KEY"))()`}
                   </code>
                 </p>
                 <p>

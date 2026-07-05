@@ -9,6 +9,7 @@ import {
   Key, Clock, CheckCircle, XCircle, Loader2, Zap, RefreshCw,
   Copy, ExternalLink, Crown, Shield
 } from 'lucide-react';
+import { siteBaseUrl } from '@/lib/utils';
 import Link from 'next/link';
 
 const PAID_PLANS = ['SCRIPTER'];
@@ -148,7 +149,7 @@ export default function KeysPage() {
                 <div className="bg-background rounded p-3 space-y-1.5">
                   <p className="text-xs text-muted-foreground font-medium">Loadstring format (use this in your executor):</p>
                   <code className="text-xs text-green-400 break-all block">
-                    {`loadstring(game:HttpGet("https://apocalypsehub.com/api/scripts/serve/SCRIPT_ID?key=${paidKey.value}&uid=${user?.id}"))() `}
+                    {`loadstring(game:HttpGet("${siteBaseUrl()}/api/scripts/serve/SCRIPT_ID?key=${paidKey.value}&uid=${user?.id}"))() `}
                   </code>
                   <p className="text-xs text-amber-400/80">
                     This key is locked to your account — the <code className="text-amber-400">uid</code> parameter is required and must match your account.

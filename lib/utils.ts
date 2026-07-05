@@ -40,6 +40,14 @@ export function timeAgo(date: string | Date): string {
   return 'just now';
 }
 
+/** The public base URL for loadstrings. Prefers the configured env var, then
+ *  the current browser origin, so copied snippets always match the live host. */
+export function siteBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_BASE_URL) return process.env.NEXT_PUBLIC_BASE_URL;
+  if (typeof window !== 'undefined') return window.location.origin;
+  return '';
+}
+
 /** Compact view counts: 24, 3.1k, 1.7M — like ScriptBlox. */
 export function formatCount(n: number): string {
   if (n < 1000) return String(n);
