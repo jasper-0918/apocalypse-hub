@@ -4,7 +4,7 @@ import { getUserFromRequest } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
 import { createHash } from 'crypto';
 import { obfuscateLua, generateLoadstringSnippet } from '@/lib/obfuscator';
-import { effectiveScriptLimit } from '@/lib/stripe';
+import { effectiveScriptLimit } from '@/lib/plans';
 import { scriptUploadSchema } from '@/lib/validators';
 
 export async function POST(req: NextRequest) {

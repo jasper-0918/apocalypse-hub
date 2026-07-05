@@ -62,7 +62,7 @@ export default function HomePage() {
       .then((r) => r.ok ? r.json() : null)
       .then((meData) => {
         if (!meData?.user) return;
-        const PAID = ['PRO', 'SCRIPTER', 'DEVELOPER'];
+        const PAID = ['SCRIPTER'];
         if (!PAID.includes(meData.user.plan) && meData.user.role !== 'OWNER') return;
         return fetch('/api/keys/paid', { headers: { Authorization: `Bearer ${token}` } })
           .then((r) => r.ok ? r.json() : null)

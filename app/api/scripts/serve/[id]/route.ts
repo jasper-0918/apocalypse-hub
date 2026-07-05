@@ -50,7 +50,7 @@ export async function GET(
       );
     }
     // Verify the account still has an active paid plan
-    const PAID_PLANS = ['PRO', 'SCRIPTER', 'DEVELOPER'];
+    const PAID_PLANS = ['SCRIPTER'];
     const { data: keyOwner } = await supabase
       .from('users')
       .select('plan, role')

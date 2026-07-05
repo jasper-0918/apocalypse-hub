@@ -99,9 +99,7 @@ export default function AdminUsersPage() {
                     <td className="py-3 px-4 text-muted-foreground">{u.email}</td>
                     <td className="py-3 px-4">
                       <Badge className={`border-0 ${
-                        u.plan === 'DEVELOPER' ? 'bg-red-600/20 text-red-400' :
                         u.plan === 'SCRIPTER' ? 'bg-emerald-600/20 text-emerald-400' :
-                        u.plan === 'PRO' ? 'bg-sky-600/20 text-sky-400' :
                         'bg-secondary text-muted-foreground'
                       }`}>{u.plan}</Badge>
                     </td>

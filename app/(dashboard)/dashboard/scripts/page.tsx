@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, FileCode2, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
-const PAID_PLANS = ['PRO', 'SCRIPTER', 'DEVELOPER'];
+const PAID_PLANS = ['SCRIPTER'];
 
 export default function ScriptsPage() {
   const { user } = useAuth();

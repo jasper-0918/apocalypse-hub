@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
 
   // Resolve key expiry hours: Scripter/Developer can configure their own
   let expiryHours = 12;
-  if (userId && (userPlan === 'SCRIPTER' || userPlan === 'DEVELOPER')) {
+  if (userId && userPlan === 'SCRIPTER') {
     const { data: userRow } = await supabase
       .from('users')
       .select('key_expiry_hours')

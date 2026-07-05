@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Crown, Clock, CheckCircle } from 'lucide-react';
 
 const SCRIPTER_HOURS = [6, 12, 18, 24, 36, 48];
-const DEVELOPER_HOURS = [6, 12, 18, 24, 36, 48, 72, 96, 120, 168];
 
 function labelHours(h: number) {
   if (h < 24) return `${h} hours`;
@@ -24,7 +23,7 @@ function labelHours(h: number) {
 export default function BillingPage() {
   const { user } = useAuth();
   const plan = user?.plan || 'FREE';
-  const canAdjust = plan === 'SCRIPTER' || plan === 'DEVELOPER';
+  const canAdjust = plan === 'SCRIPTER';
 
   const [expiryHours, setExpiryHours] = useState(12);
   const [saving, setSaving] = useState(false);
@@ -52,7 +51,7 @@ export default function BillingPage() {
     setSaving(false);
   };
 
-  const options = plan === 'DEVELOPER' ? DEVELOPER_HOURS : SCRIPTER_HOURS;
+  const options = SCRIPTER_HOURS;
 
   return (
     <div className="p-8 max-w-5xl">
@@ -97,8 +96,7 @@ export default function BillingPage() {
               <div>
                 <CardTitle className="text-foreground">Key Expiry Duration</CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  How long claimed keys remain valid.{' '}
-                  {plan === 'DEVELOPER' ? 'Developer range: 6–168 hours.' : 'Scripter range: 6–48 hours.'}
+                  How long claimed keys remain valid. Scripter range: 6–48 hours.
                 </CardDescription>
               </div>
             </div>

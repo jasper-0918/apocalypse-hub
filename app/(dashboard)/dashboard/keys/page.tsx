@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-const PAID_PLANS = ['PRO', 'SCRIPTER', 'DEVELOPER'];
+const PAID_PLANS = ['SCRIPTER'];
 
 function daysRemaining(expiresAt: string) {
   const diff = new Date(expiresAt).getTime() - Date.now();
@@ -223,7 +223,7 @@ export default function KeysPage() {
               </Button>
             </Link>
             <p className="text-xs text-muted-foreground text-center">
-              Upgrade to PRO, Scripter, or Developer to skip the key system and get a 30-day key.
+              Upgrade to Scripter to skip the key system and get a renewable key.
             </p>
           </CardContent>
         </Card>

@@ -31,7 +31,7 @@ export async function PATCH(req: NextRequest) {
   const user = await getUserFromRequest(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  if (user.plan !== 'SCRIPTER' && user.plan !== 'DEVELOPER') {
+  if (user.plan !== 'SCRIPTER') {
     return NextResponse.json(
       { error: 'Key expiry adjustment requires Scripter or Developer plan' },
       { status: 403 }
@@ -40,7 +40,7 @@ export async function PATCH(req: NextRequest) {
 
   const body = await req.json();
   const hours = Number(body.key_expiry_hours);
-  const maxHours = user.plan === 'DEVELOPER' ? 168 : 48;
+  const maxHours = 48;
 
   if (!Number.isInteger(hours) || hours < 6 || hours > maxHours) {
     return NextResponse.json(
