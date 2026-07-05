@@ -233,24 +233,37 @@ export default function HomePage() {
                     <span>by {script.owner_username}</span>
                     <span>{new Date(script.created_at).toLocaleDateString()}</span>
                   </div>
-                  <Button
-                    onClick={() => copyLoadstring(script.id)}
-                    variant="outline"
-                    size="sm"
-                    className="w-full border-border text-foreground hover:bg-red-500/10 hover:text-red-400 hover:border-red-900/30"
-                  >
-                    {copiedId === script.id ? (
-                      <>
-                        <CheckCircle className="mr-1.5 h-3.5 w-3.5 text-green-400" />
-                        <span className="text-green-400">Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="mr-1.5 h-3.5 w-3.5" />
-                        Copy Loadstring
-                      </>
+                  <div className="flex gap-2">
+                    {!paidKeyInfo && (
+                      <Link href={`/get-key?scriptId=${script.id}`} className="flex-1">
+                        <Button
+                          size="sm"
+                          className="w-full bg-red-600 hover:bg-red-700 text-white"
+                        >
+                          <Key className="mr-1.5 h-3.5 w-3.5" />
+                          Get Key
+                        </Button>
+                      </Link>
                     )}
-                  </Button>
+                    <Button
+                      onClick={() => copyLoadstring(script.id)}
+                      variant="outline"
+                      size="sm"
+                      className={`${paidKeyInfo ? 'w-full' : 'flex-1'} border-border text-foreground hover:bg-red-500/10 hover:text-red-400 hover:border-red-900/30`}
+                    >
+                      {copiedId === script.id ? (
+                        <>
+                          <CheckCircle className="mr-1.5 h-3.5 w-3.5 text-green-400" />
+                          <span className="text-green-400">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="mr-1.5 h-3.5 w-3.5" />
+                          {paidKeyInfo ? 'Copy Loadstring' : 'Copy'}
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}

@@ -171,32 +171,42 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Find an available key in today's pool.
   const { data: poolKeys } = await supabase
     .from('daily_key_pool_keys')
     .select('key_id')
     .eq('pool_id', pool.id);
 
-  if (!poolKeys || poolKeys.length === 0) {
-    return NextResponse.json(
-      { error: 'All keys for today have been claimed. Come back tomorrow!' },
-      { status: 503 }
-    );
+  let availableKey: any = null;
+  if (poolKeys && poolKeys.length > 0) {
+    const keyIds = poolKeys.map((pk: any) => pk.key_id);
+    const { data } = await supabase
+      .from('keys')
+      .select('*')
+      .in('id', keyIds)
+      .is('assigned_to', null)
+      .eq('is_active', false)
+      .limit(1)
+      .maybeSingle();
+    availableKey = data;
   }
 
-  const keyIds = poolKeys.map((pk: any) => pk.key_id);
-
-  const { data: availableKey } = await supabase
-    .from('keys')
-    .select('*')
-    .in('id', keyIds)
-    .is('assigned_to', null)
-    .eq('is_active', false)
-    .limit(1)
-    .single();
+  // Pool exhausted → mint a fresh key on demand so users are never blocked.
+  if (!availableKey) {
+    const { data: fresh } = await supabase
+      .from('keys')
+      .insert({ value: generateKeyValue(), expires_at: getKeyExpiry(), is_active: false, is_used: false })
+      .select()
+      .single();
+    if (fresh) {
+      await supabase.from('daily_key_pool_keys').insert({ pool_id: pool.id, key_id: fresh.id });
+      availableKey = fresh;
+    }
+  }
 
   if (!availableKey) {
     return NextResponse.json(
-      { error: 'All keys for today have been claimed. Come back tomorrow!' },
+      { error: 'Key pool unavailable. Try again in a moment.' },
       { status: 503 }
     );
   }

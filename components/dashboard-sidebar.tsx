@@ -13,6 +13,7 @@ import {
   Flame,
   HeadphonesIcon,
   Crown,
+  Wallet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +21,7 @@ const links = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard/scripts', label: 'Scripts', icon: FileCode2 },
   { href: '/dashboard/keys', label: 'Keys', icon: Key },
+  { href: '/dashboard/earnings', label: 'Earnings', icon: Wallet },
   { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
   { href: '/dashboard/support', label: 'Support', icon: HeadphonesIcon },
 ];
