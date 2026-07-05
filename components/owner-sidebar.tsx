@@ -14,10 +14,12 @@ import {
   LogOut,
   Shield,
   Crown,
+  Wallet,
 } from 'lucide-react';
 
 const OWNER_LINKS = [
   { href: '/owner', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/owner/orders', label: 'Payments', icon: Wallet },
   { href: '/owner/games', label: 'Game Tags', icon: Gamepad2 },
   { href: '/owner/subscribers', label: 'Subscribers', icon: CreditCard },
   { href: '/owner/support', label: 'Support', icon: HeadphonesIcon },
