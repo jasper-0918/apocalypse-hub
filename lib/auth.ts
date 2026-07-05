@@ -41,17 +41,20 @@ export async function getUserFromRequest(request: Request): Promise<SessionUser 
   const authHeader = request.headers.get('authorization');
   const cookieHeader = request.headers.get('cookie');
 
-  let token: string | null = null;
-
-  if (authHeader?.startsWith('Bearer ')) {
-    token = authHeader.slice(7);
-  } else if (cookieHeader) {
+  // Try every available token and use the first that verifies, so a stale
+  // localStorage Bearer token can't override a still-valid session cookie.
+  const candidates: string[] = [];
+  if (authHeader?.startsWith('Bearer ')) candidates.push(authHeader.slice(7));
+  if (cookieHeader) {
     const match = cookieHeader.match(/ah_session=([^;]+)/);
-    if (match) token = match[1];
+    if (match) candidates.push(match[1]);
   }
 
-  if (!token) return null;
-  return verifySessionToken(token);
+  for (const token of candidates) {
+    const user = await verifySessionToken(token);
+    if (user) return user;
+  }
+  return null;
 }
 
 export async function authenticateUser(email: string, password: string): Promise<SessionUser | null> {

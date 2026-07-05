@@ -115,8 +115,9 @@ export async function verifyLinkvertise(hash: string): Promise<boolean> {
         token
       )}&hash=${encodeURIComponent(hash)}`
     );
-    const text = (await res.text()).trim().toLowerCase();
-    return text === 'true' || text.includes('"status":"success"') || text.includes('"valid":true');
+    // Linkvertise returns {"status": true} for a genuine completion, {"status": false} otherwise.
+    const data = await res.json().catch(() => null);
+    return data?.status === true;
   } catch {
     return false;
   }
