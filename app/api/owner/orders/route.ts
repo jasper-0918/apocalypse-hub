@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServerClient();
   const { data } = await supabase
     .from('payment_orders')
-    .select('*, users!payment_orders_user_id_fkey(username, email)')
+    .select('*, users(username, email)')
     .order('created_at', { ascending: false })
     .limit(200);
 
