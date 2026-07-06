@@ -55,3 +55,41 @@ export async function sendVerificationEmail(to: string, code: string): Promise<b
     return false;
   }
 }
+
+export async function sendPasswordResetEmail(to: string, link: string): Promise<boolean> {
+  if (!isEmailConfigured()) return false;
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"Apocalypse Hub" <${process.env.GMAIL_USER}>`,
+      to,
+      subject: 'Reset your Apocalypse Hub password',
+      text:
+        `We received a request to reset your Apocalypse Hub password.\n\n` +
+        `Open this link to choose a new password (expires in 30 minutes):\n${link}\n\n` +
+        `If you didn't request this, ignore this email — your password won't change.`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:auto">
+          <h2 style="color:#ef4444">Apocalypse Hub</h2>
+          <p>We received a request to reset your password. Click the button below to choose a new one:</p>
+          <p style="text-align:center;margin:24px 0">
+            <a href="${link}" style="display:inline-block;background:#ef4444;color:#fff;text-decoration:none;font-weight:bold;padding:12px 28px;border-radius:8px">Reset password</a>
+          </p>
+          <p style="color:#888;font-size:13px">Or paste this link into your browser:<br>
+            <a href="${link}" style="color:#ef4444;word-break:break-all">${link}</a>
+          </p>
+          <p style="color:#888">This link expires in 30 minutes. If you didn't request a reset, ignore this email — your password won't change.</p>
+        </div>`,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}

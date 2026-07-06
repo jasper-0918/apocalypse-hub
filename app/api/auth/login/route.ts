@@ -3,9 +3,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUser, createSessionToken } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
 import { loginSchema } from '@/lib/validators';
+import { getClientIp, rateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    const rl = rateLimit(`login:${ip}`, 10, 5 * 60 * 1000);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: 'Too many login attempts. Please wait a few minutes and try again.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+      );
+    }
+
     const body = await req.json();
     const parsed = loginSchema.safeParse(body);
 

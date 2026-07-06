@@ -11,6 +11,15 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(10, 'Invalid or missing reset token'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
 export const scriptUploadSchema = z.object({
   name: z.string().min(1, 'Script name is required').max(100, 'Script name must be at most 100 characters'),
   description: z.string().max(500, 'Description must be at most 500 characters').optional(),

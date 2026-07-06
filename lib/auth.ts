@@ -4,6 +4,14 @@ import { createServerClient } from './supabase/server';
 
 const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'apocalypse-hub-secret-change-me');
 
+// Session tokens are signed with NEXTAUTH_SECRET. If it's missing in production
+// the insecure fallback is used and anyone could forge a session — warn loudly.
+if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_SECRET) {
+  console.warn(
+    '[SECURITY] NEXTAUTH_SECRET is not set — session tokens are signed with an insecure default. Set NEXTAUTH_SECRET in your environment immediately.'
+  );
+}
+
 export interface SessionUser {
   id: string;
   email: string;

@@ -104,6 +104,31 @@ export default function AdminUsersPage() {
     setBusyId(null);
   };
 
+  const handleSetPlan = async (u: any, plan: string) => {
+    if (plan === u.plan) return;
+    const token = localStorage.getItem('ah_session');
+    if (!token) return;
+    setBusyId(u.id);
+    setNotice(null);
+    try {
+      const res = await fetch(`/api/admin/users/${u.id}/plan`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, plan: data.plan || plan } : x)));
+        setNotice({ text: `${u.username} is now on the ${data.plan || plan} plan.`, kind: 'ok' });
+      } else {
+        setNotice({ text: data.error || 'Could not update plan.', kind: 'err' });
+      }
+    } catch {
+      setNotice({ text: 'Could not update plan.', kind: 'err' });
+    }
+    setBusyId(null);
+  };
+
   const filtered = users.filter(
     (u) =>
       u.username.toLowerCase().includes(search.toLowerCase()) ||
@@ -168,10 +193,18 @@ export default function AdminUsersPage() {
                     <td className="py-3 px-4 font-medium">{u.username}</td>
                     <td className="py-3 px-4 text-muted-foreground">{u.email}</td>
                     <td className="py-3 px-4">
-                      <Badge className={`border-0 ${
-                        u.plan === 'SCRIPTER' ? 'bg-emerald-600/20 text-emerald-400' :
-                        'bg-secondary text-muted-foreground'
-                      }`}>{u.plan}</Badge>
+                      <select
+                        value={u.plan === 'SCRIPTER' ? 'SCRIPTER' : 'FREE'}
+                        disabled={busyId === u.id || u.role === 'OWNER'}
+                        onChange={(e) => handleSetPlan(u, e.target.value)}
+                        title="Set the user's plan after verifying their payment"
+                        className={`rounded-md border border-border bg-secondary px-2 py-1 text-sm disabled:opacity-60 ${
+                          u.plan === 'SCRIPTER' ? 'text-emerald-400' : 'text-muted-foreground'
+                        }`}
+                      >
+                        <option value="FREE">FREE</option>
+                        <option value="SCRIPTER">SCRIPTER</option>
+                      </select>
                     </td>
                     <td className="py-3 px-4">
                       {u.role === 'ADMIN' ? (

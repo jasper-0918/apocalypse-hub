@@ -4,9 +4,19 @@ import { createUser, createSessionToken } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
 import { registerSchema } from '@/lib/validators';
 import { isEmailConfigured, generateCode, sendVerificationEmail } from '@/lib/email';
+import { getClientIp, rateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    const rl = rateLimit(`register:${ip}`, 5, 60 * 60 * 1000);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: 'Too many sign-ups from this network. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+      );
+    }
+
     const body = await req.json();
     const parsed = registerSchema.safeParse(body);
 
