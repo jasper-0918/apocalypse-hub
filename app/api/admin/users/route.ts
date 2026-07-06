@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
 
   const { data: users } = await supabase
     .from('users')
-    .select('id, username, email, plan, role, created_at')
+    .select('id, username, email, plan, role, email_verified, created_at')
     .order('created_at', { ascending: false })
     .limit(limit);
 

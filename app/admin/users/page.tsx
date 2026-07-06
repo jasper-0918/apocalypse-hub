@@ -88,13 +88,19 @@ export default function AdminUsersPage() {
                   <th className="text-left py-3 px-4 font-medium">Email</th>
                   <th className="text-left py-3 px-4 font-medium">Plan</th>
                   <th className="text-left py-3 px-4 font-medium">Role</th>
+                  <th className="text-left py-3 px-4 font-medium">Status</th>
                   <th className="text-left py-3 px-4 font-medium">Joined</th>
                   <th className="text-left py-3 px-4 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((u) => (
-                  <tr key={u.id} className="border-b border-border/50 text-foreground">
+                  <tr
+                    key={u.id}
+                    className={`border-b border-border/50 text-foreground ${
+                      u.email_verified === false ? 'opacity-60' : ''
+                    }`}
+                  >
                     <td className="py-3 px-4 font-medium">{u.username}</td>
                     <td className="py-3 px-4 text-muted-foreground">{u.email}</td>
                     <td className="py-3 px-4">
@@ -108,6 +114,13 @@ export default function AdminUsersPage() {
                         <span className="text-amber-500 font-semibold">ADMIN</span>
                       ) : (
                         <span className="text-muted-foreground">USER</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
+                      {u.email_verified === false ? (
+                        <Badge className="border-0 bg-amber-500/15 text-amber-400">Pending</Badge>
+                      ) : (
+                        <Badge className="border-0 bg-emerald-600/20 text-emerald-400">Verified</Badge>
                       )}
                     </td>
                     <td className="py-3 px-4 text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</td>

@@ -33,6 +33,12 @@ export default function RegisterPage() {
         setError(data.error || 'Registration failed');
         return;
       }
+      // Email verification required: no session is issued yet — send them to the
+      // code-entry page (which we also deep-link from the verification email).
+      if (data.needsVerification) {
+        router.push(`/verify?email=${encodeURIComponent(data.email || email)}`);
+        return;
+      }
       localStorage.setItem('ah_session', data.token);
       router.push('/dashboard');
     } catch {

@@ -29,6 +29,11 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) {
+        // Unverified account: route to the code-entry page instead of a dead end.
+        if (data.needsVerification) {
+          router.push(`/verify?email=${encodeURIComponent(data.email || email)}`);
+          return;
+        }
         setError(data.error || 'Login failed');
         return;
       }

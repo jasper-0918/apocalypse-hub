@@ -14,14 +14,10 @@ export default function VerifyPage() {
   const [resending, setResending] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [fromLink, setFromLink] = useState(false);
+  const [autoTried, setAutoTried] = useState(false);
 
-  useEffect(() => {
-    const e = new URLSearchParams(window.location.search).get('email');
-    if (e) setEmail(e);
-  }, []);
-
-  const verify = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitVerification = async () => {
     setLoading(true);
     setError('');
     setInfo('');
@@ -39,12 +35,39 @@ export default function VerifyPage() {
       }
       localStorage.setItem('ah_session', data.token);
       // Full reload so the auth provider picks up the new session.
-      window.location.href = data.user?.role === 'OWNER' ? '/owner' : '/dashboard';
+      const role = data.user?.role;
+      window.location.href = role === 'OWNER' ? '/owner' : role === 'ADMIN' ? '/admin' : '/dashboard';
     } catch {
       setError('Something went wrong. Try again.');
       setLoading(false);
     }
   };
+
+  const verify = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitVerification();
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const e = params.get('email');
+    const c = params.get('code');
+    if (e) setEmail(e);
+    if (c) {
+      setCode(c.replace(/\D/g, '').slice(0, 6));
+      setFromLink(true);
+    }
+  }, []);
+
+  // Arriving from the email's "Verify my email" link (email + code in the URL):
+  // submit once automatically so the click alone completes verification.
+  useEffect(() => {
+    if (fromLink && !autoTried && email && code.length === 6) {
+      setAutoTried(true);
+      submitVerification();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromLink, autoTried, email, code]);
 
   const resend = async () => {
     setResending(true);
