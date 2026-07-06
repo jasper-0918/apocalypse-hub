@@ -36,16 +36,25 @@ export async function POST(req: NextRequest) {
   const buffer = Buffer.from(await file.arrayBuffer());
   const path = `${user.id}/${randomUUID()}.${ext}`;
 
-  const { error } = await supabase.storage.from(BUCKET).upload(path, buffer, {
-    contentType: file.type,
-    upsert: false,
-  });
+  const doUpload = () =>
+    supabase.storage.from(BUCKET).upload(path, buffer, { contentType: file.type, upsert: false });
+
+  let { error } = await doUpload();
+
+  // Self-heal: if the bucket doesn't exist yet, create it (public) and retry once.
+  if (error) {
+    await supabase.storage
+      .createBucket(BUCKET, {
+        public: true,
+        fileSizeLimit: MAX_BYTES,
+        allowedMimeTypes: Object.keys(ALLOWED),
+      })
+      .catch(() => {});
+    ({ error } = await doUpload());
+  }
 
   if (error) {
-    return NextResponse.json(
-      { error: 'Upload failed. Ensure the script-thumbnails storage bucket exists (migration 015).' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Upload failed. Please try again.' }, { status: 500 });
   }
 
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);

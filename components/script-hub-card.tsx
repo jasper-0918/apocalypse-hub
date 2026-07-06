@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Eye, Key, Gamepad2 } from 'lucide-react';
 import { timeAgo, formatCount } from '@/lib/utils';
 import { gameTheme } from '@/lib/games';
@@ -52,16 +52,18 @@ export function ThumbnailFallback({ name, game, big }: { name: string; game?: st
 
 /** Roblox-style tilted rounded-square emblem (original, brand-evoking). */
 export function RobloxEmblem({ className = 'h-9 w-9' }: { className?: string }) {
+  // Unique gradient id per instance so many cards don't emit duplicate DOM ids.
+  const gid = `roblox-emblem-${useId().replace(/:/g, '')}`;
   return (
     <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
       <defs>
-        <linearGradient id="roblox-emblem" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#ff4b4b" />
           <stop offset="100%" stopColor="#c81e1e" />
         </linearGradient>
       </defs>
       <g transform="rotate(12 24 24)">
-        <rect x="8" y="8" width="32" height="32" rx="7" fill="url(#roblox-emblem)" />
+        <rect x="8" y="8" width="32" height="32" rx="7" fill={`url(#${gid})`} />
         <rect x="20" y="20" width="8" height="8" rx="2" fill="#0b0b0f" />
       </g>
     </svg>
