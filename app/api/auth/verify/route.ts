@@ -3,18 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { createSessionToken } from '@/lib/auth';
 import { generateCode, sendVerificationEmail, isEmailConfigured } from '@/lib/email';
-import { getClientIp, rateLimit } from '@/lib/rate-limit';
+import { getClientIp, rateLimit, tooManyRequests } from '@/lib/rate-limit';
 
 // POST { email, code } -> verify the code and log the user in.
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
   const rl = rateLimit(`verify:${ip}`, 20, 10 * 60 * 1000);
-  if (!rl.ok) {
-    return NextResponse.json(
-      { error: 'Too many attempts. Please wait a few minutes and try again.' },
-      { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
-    );
-  }
+  if (!rl.ok) return tooManyRequests(rl.retryAfter, 'Too many attempts. Please wait a few minutes and try again.');
 
   const body = await req.json().catch(() => ({}));
   const email = (body.email || '').toString().trim().toLowerCase();
@@ -64,12 +59,7 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const ip = getClientIp(req);
   const rl = rateLimit(`verify-resend:${ip}`, 5, 15 * 60 * 1000);
-  if (!rl.ok) {
-    return NextResponse.json(
-      { error: 'Too many requests. Please wait a few minutes and try again.' },
-      { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
-    );
-  }
+  if (!rl.ok) return tooManyRequests(rl.retryAfter);
   if (!isEmailConfigured()) {
     return NextResponse.json({ error: 'Email is not configured' }, { status: 503 });
   }

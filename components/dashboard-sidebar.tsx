@@ -15,6 +15,7 @@ import {
   Crown,
   Wallet,
   Power,
+  Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +26,7 @@ const links = [
   { href: '/dashboard/earnings', label: 'Earnings', icon: Wallet },
   { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
   { href: '/dashboard/support', label: 'Support', icon: HeadphonesIcon },
+  { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 
 export function DashboardSidebar() {

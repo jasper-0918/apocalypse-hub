@@ -28,6 +28,16 @@ export const resetPasswordSchema = z.object({
   password: passwordField,
 });
 
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: passwordField,
+});
+
+export const changeEmailSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newEmail: z.string().email('Invalid email address'),
+});
+
 export const scriptUploadSchema = z.object({
   name: z.string().min(1, 'Script name is required').max(100, 'Script name must be at most 100 characters'),
   description: z.string().max(500, 'Description must be at most 500 characters').optional(),

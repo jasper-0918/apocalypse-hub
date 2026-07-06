@@ -4,6 +4,7 @@
 // so it slows brute-force / abuse without being a hard global guarantee. For a
 // strict global limit you'd back this with Redis/Upstash, but for protecting
 // login/register/reset from casual abuse this is a big, dependency-free win.
+import { NextResponse } from 'next/server';
 
 interface Bucket {
   count: number;
@@ -49,4 +50,12 @@ export function rateLimit(key: string, limit: number, windowMs: number): RateRes
     return { ok: false, retryAfter: Math.max(1, Math.ceil((bucket.reset - now) / 1000)) };
   }
   return { ok: true, retryAfter: 0 };
+}
+
+/** Standard 429 response used by every rate-limited auth route. */
+export function tooManyRequests(
+  retryAfter: number,
+  message = 'Too many requests. Please wait a few minutes and try again.'
+): NextResponse {
+  return NextResponse.json({ error: message }, { status: 429, headers: { 'Retry-After': String(retryAfter) } });
 }

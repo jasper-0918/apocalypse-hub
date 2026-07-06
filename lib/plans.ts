@@ -22,5 +22,3 @@ export function effectiveScriptLimit(plan: string, extraSlotPacks = 0): number {
   if (base >= 9999) return base;
   return base + extraSlotPacks * SLOT_ADDON.slotsPerPack;
 }
-
-export const PLAN_LIMITS: Record<string, number> = PLAN_BASE_LIMITS;

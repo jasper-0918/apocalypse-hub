@@ -4,7 +4,7 @@ import { randomBytes, createHash } from 'crypto';
 import { createServerClient } from '@/lib/supabase/server';
 import { forgotPasswordSchema } from '@/lib/validators';
 import { isEmailConfigured, sendPasswordResetEmail } from '@/lib/email';
-import { getClientIp, rateLimit } from '@/lib/rate-limit';
+import { getClientIp, rateLimit, tooManyRequests } from '@/lib/rate-limit';
 import { SITE_URL } from '@/lib/seo';
 
 // POST { email } -> if the account exists, email a password-reset link.
@@ -13,12 +13,7 @@ import { SITE_URL } from '@/lib/seo';
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
   const rl = rateLimit(`forgot:${ip}`, 5, 15 * 60 * 1000);
-  if (!rl.ok) {
-    return NextResponse.json(
-      { error: 'Too many requests. Please wait a few minutes and try again.' },
-      { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
-    );
-  }
+  if (!rl.ok) return tooManyRequests(rl.retryAfter);
 
   const body = await req.json().catch(() => ({}));
   const parsed = forgotPasswordSchema.safeParse(body);

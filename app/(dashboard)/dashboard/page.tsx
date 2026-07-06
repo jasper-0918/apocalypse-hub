@@ -5,15 +5,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileCode2, Key, Crown, Plus, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-
-const PLAN_LIMITS: Record<string, number> = {
-  FREE: 10, SCRIPTER: 50,
-};
+import { PLAN_BASE_LIMITS } from '@/lib/plans';
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const plan = user?.plan || 'FREE';
-  const limit = PLAN_LIMITS[plan];
+  const limit = PLAN_BASE_LIMITS[plan] ?? PLAN_BASE_LIMITS.FREE;
 
   return (
     <div className="p-8 max-w-5xl">

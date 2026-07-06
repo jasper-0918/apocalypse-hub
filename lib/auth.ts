@@ -51,12 +51,25 @@ export async function createSessionToken(user: SessionUser): Promise<string> {
     .sign(secret);
 }
 
-export async function verifySessionToken(token: string): Promise<SessionUser | null> {
+/**
+ * Invalidate every existing session for a user by bumping their token_version
+ * (embedded in each JWT). Best-effort so it can't fail its caller if the
+ * token_version column (migration 018) isn't applied yet.
+ */
+export async function bumpTokenVersion(userId: string): Promise<void> {
   try {
-    const { payload } = await jwtVerify(token, secret);
-    return payload as unknown as SessionUser;
+    const supabase = createServerClient();
+    const { data } = await supabase
+      .from('users')
+      .select('token_version')
+      .eq('id', userId)
+      .maybeSingle();
+    await supabase
+      .from('users')
+      .update({ token_version: ((data as any)?.token_version ?? 0) + 1 })
+      .eq('id', userId);
   } catch {
-    return null;
+    /* token_version column may not exist yet */
   }
 }
 
