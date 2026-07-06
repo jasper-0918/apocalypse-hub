@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { createServerClient } from '@/lib/supabase/server';
+import { getGameSummaries } from '@/lib/scripts-server';
 import { SITE_URL } from '@/lib/seo';
 
 // Regenerate at most hourly so newly published scripts appear without a redeploy.
@@ -49,5 +50,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...scriptRoutes];
+  let gameRoutes: MetadataRoute.Sitemap = [];
+  try {
+    const games = await getGameSummaries();
+    gameRoutes = games.map((g) => ({
+      url: `${SITE_URL}/game/${g.slug}`,
+      lastModified: new Date(g.lastModified || now),
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    }));
+  } catch {
+    gameRoutes = [];
+  }
+
+  return [...staticRoutes, ...gameRoutes, ...scriptRoutes];
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getPublicScript } from '@/lib/scripts-server';
 import { SITE_URL, SITE_NAME } from '@/lib/seo';
+import { slugify } from '@/lib/utils';
 import { ScriptDetailClient, EMPTY_REACTIONS, ScriptDetail } from './script-detail-client';
 
 export const dynamic = 'force-dynamic';
@@ -61,22 +62,44 @@ export async function generateMetadata({
 export default async function ScriptPage({ params }: { params: { slug: string } }) {
   const script = await getPublicScript(params.slug);
 
-  // Structured data helps Google show a rich result for the script.
+  // Structured data helps Google show a rich result for the script, plus a
+  // breadcrumb trail (Home › Game › Script) for the search snippet.
   const jsonLd = script
-    ? {
-        '@context': 'https://schema.org',
-        '@type': 'SoftwareApplication',
-        name: script.name,
-        description: metaDescription(script.name, script.game, script.description),
-        applicationCategory: 'GameApplication',
-        operatingSystem: 'Roblox',
-        url: `${SITE_URL}/script/${script.slug}`,
-        image: script.thumbnail_url || undefined,
-        datePublished: script.created_at,
-        dateModified: script.updated_at,
-        author: { '@type': 'Person', name: script.owner_username },
-        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-      }
+    ? [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          name: script.name,
+          description: metaDescription(script.name, script.game, script.description),
+          applicationCategory: 'GameApplication',
+          operatingSystem: 'Roblox',
+          url: `${SITE_URL}/script/${script.slug}`,
+          image: script.thumbnail_url || undefined,
+          datePublished: script.created_at,
+          dateModified: script.updated_at,
+          author: { '@type': 'Person', name: script.owner_username },
+          offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: script.game,
+              item: `${SITE_URL}/game/${slugify(script.game)}`,
+            },
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: script.name,
+              item: `${SITE_URL}/script/${script.slug}`,
+            },
+          ],
+        },
+      ]
     : null;
 
   const initialScript: ScriptDetail | null = script

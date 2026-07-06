@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { ScriptHubCard, ThumbnailFallback, HubScript } from '@/components/script-hub-card';
 import { SiteHeader } from '@/components/site-header';
-import { timeAgo, formatCount } from '@/lib/utils';
+import { Breadcrumbs } from '@/components/breadcrumbs';
+import { timeAgo, formatCount, slugify } from '@/lib/utils';
 import {
   Key, Copy, CheckCircle, Download, ThumbsUp, ThumbsDown, Star,
   AlertTriangle, Eye, Clock, Gamepad2, Loader2, User, MessageSquare, ArrowLeft,
@@ -166,9 +167,20 @@ export function ScriptDetailClient({
       <SiteHeader />
 
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
-          <ArrowLeft className="h-4 w-4" /> Back to catalog
-        </Link>
+        {script ? (
+          <Breadcrumbs
+            emitJsonLd={false}
+            items={[
+              { name: 'Home', href: '/' },
+              { name: script.game || 'Universal', href: `/game/${slugify(script.game || 'Universal')}` },
+              { name: script.name, href: `/script/${script.slug}` },
+            ]}
+          />
+        ) : (
+          <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
+            <ArrowLeft className="h-4 w-4" /> Back to catalog
+          </Link>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-32">
