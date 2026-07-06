@@ -1,16 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/components/auth-provider';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Search, Shield } from 'lucide-react';
+import { Loader2, Search, Shield, Trash2, Send } from 'lucide-react';
 
 export default function AdminUsersPage() {
+  const { user: me } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ text: string; kind: 'ok' | 'err' } | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -52,6 +56,54 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleResend = async (u: any) => {
+    const token = localStorage.getItem('ah_session');
+    if (!token) return;
+    setBusyId(u.id);
+    setNotice(null);
+    try {
+      const res = await fetch(`/api/admin/users/${u.id}/resend-verification`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) setNotice({ text: `Verification email resent to ${u.email}.`, kind: 'ok' });
+      else setNotice({ text: data.error || 'Could not resend verification.', kind: 'err' });
+    } catch {
+      setNotice({ text: 'Could not resend verification.', kind: 'err' });
+    }
+    setBusyId(null);
+  };
+
+  const handleDelete = async (u: any) => {
+    if (
+      !window.confirm(
+        `Delete ${u.username} (${u.email})? This permanently removes their account and scripts. This cannot be undone.`
+      )
+    )
+      return;
+    const token = localStorage.getItem('ah_session');
+    if (!token) return;
+    setBusyId(u.id);
+    setNotice(null);
+    try {
+      const res = await fetch(`/api/admin/users/${u.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setUsers((prev) => prev.filter((x) => x.id !== u.id));
+        setNotice({ text: `Deleted ${u.username}.`, kind: 'ok' });
+      } else {
+        setNotice({ text: data.error || 'Could not delete user.', kind: 'err' });
+      }
+    } catch {
+      setNotice({ text: 'Could not delete user.', kind: 'err' });
+    }
+    setBusyId(null);
+  };
+
   const filtered = users.filter(
     (u) =>
       u.username.toLowerCase().includes(search.toLowerCase()) ||
@@ -73,6 +125,18 @@ export default function AdminUsersPage() {
           />
         </div>
       </div>
+
+      {notice && (
+        <div
+          className={`mb-4 rounded-md border px-4 py-2 text-sm ${
+            notice.kind === 'ok'
+              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+              : 'border-red-500/30 bg-red-500/10 text-red-300'
+          }`}
+        >
+          {notice.text}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
@@ -112,6 +176,8 @@ export default function AdminUsersPage() {
                     <td className="py-3 px-4">
                       {u.role === 'ADMIN' ? (
                         <span className="text-amber-500 font-semibold">ADMIN</span>
+                      ) : u.role === 'OWNER' ? (
+                        <span className="text-red-400 font-semibold">OWNER</span>
                       ) : (
                         <span className="text-muted-foreground">USER</span>
                       )}
@@ -125,15 +191,44 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="py-3 px-4 text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</td>
                     <td className="py-3 px-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleToggleAdmin(u.id, u.role)}
-                        className={u.role === 'ADMIN' ? 'text-amber-400 hover:text-amber-300' : 'text-muted-foreground'}
-                      >
-                        <Shield className="h-3.5 w-3.5 mr-1" />
-                        {u.role === 'ADMIN' ? 'Remove Admin' : 'Make Admin'}
-                      </Button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {u.role !== 'OWNER' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={busyId === u.id}
+                            onClick={() => handleToggleAdmin(u.id, u.role)}
+                            className={u.role === 'ADMIN' ? 'text-amber-400 hover:text-amber-300' : 'text-muted-foreground'}
+                          >
+                            <Shield className="h-3.5 w-3.5 mr-1" />
+                            {u.role === 'ADMIN' ? 'Remove Admin' : 'Make Admin'}
+                          </Button>
+                        )}
+                        {u.email_verified === false && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={busyId === u.id}
+                            onClick={() => handleResend(u)}
+                            className="text-sky-400 hover:text-sky-300 border-sky-500/30"
+                          >
+                            <Send className="h-3.5 w-3.5 mr-1" />
+                            Resend
+                          </Button>
+                        )}
+                        {me?.id !== u.id && u.role !== 'OWNER' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={busyId === u.id}
+                            onClick={() => handleDelete(u)}
+                            className="text-red-400 hover:text-red-300 border-red-500/30"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-1" />
+                            Delete
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
