@@ -2,6 +2,8 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
+import { slugify } from '@/lib/utils';
+import { pingIndexNow } from '@/lib/indexnow';
 
 export async function DELETE(
   req: NextRequest,
@@ -97,6 +99,16 @@ export async function PATCH(
             key_id: key.id,
           }, { onConflict: 'script_id,key_id' });
         }
+      }
+
+      // Ask search engines to (re)crawl the now-public page and its listings.
+      if (updated) {
+        const gList = Array.isArray(updated.games) && updated.games.length
+          ? updated.games
+          : [updated.game || 'Universal'];
+        const paths = new Set<string>(['/', `/script/${updated.slug || updated.id}`]);
+        for (const g of gList) if (g) paths.add(`/game/${slugify(String(g))}`);
+        await pingIndexNow(Array.from(paths));
       }
     }
 

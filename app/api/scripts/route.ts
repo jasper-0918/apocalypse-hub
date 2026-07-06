@@ -6,7 +6,8 @@ import { createHash } from 'crypto';
 import { obfuscateLua, generateLoadstringSnippet } from '@/lib/obfuscator';
 import { effectiveScriptLimit } from '@/lib/plans';
 import { scriptUploadSchema } from '@/lib/validators';
-import { buildScriptSlug } from '@/lib/utils';
+import { buildScriptSlug, slugify } from '@/lib/utils';
+import { pingIndexNow } from '@/lib/indexnow';
 import { randomUUID } from 'crypto';
 
 export async function POST(req: NextRequest) {
@@ -124,6 +125,12 @@ export async function POST(req: NextRequest) {
           }, { onConflict: 'script_id,key_id' });
         }
       }
+
+      // Nudge search engines to crawl the new page (and the listings it appears
+      // on) right away instead of waiting for the next scheduled recrawl.
+      const paths = new Set<string>(['/', `/script/${script.slug || script.id}`]);
+      for (const g of games) paths.add(`/game/${slugify(g)}`);
+      await pingIndexNow(Array.from(paths));
     }
 
     return NextResponse.json({

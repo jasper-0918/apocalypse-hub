@@ -4,13 +4,39 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, FileCode2, Key, Activity, Loader2, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Users, FileCode2, Key, Activity, Loader2, Sparkles, Globe } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
   const [stats, setStats] = useState({ users: 0, scripts: 0, keys: 0, activeKeys: 0 });
   const [loading, setLoading] = useState(true);
   const [recentUsers, setRecentUsers] = useState<any[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitMsg, setSubmitMsg] = useState<string | null>(null);
+
+  const submitToSearchEngines = async () => {
+    setSubmitting(true);
+    setSubmitMsg(null);
+    try {
+      const token = localStorage.getItem('ah_session');
+      const res = await fetch('/api/indexnow', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        setSubmitMsg(`Submitted ${data.submitted} page${data.submitted === 1 ? '' : 's'} to search engines.`);
+      } else if (res.ok && data.skipped) {
+        setSubmitMsg(`Skipped: ${data.skipped}. (This only works on the live domain.)`);
+      } else {
+        setSubmitMsg('Could not submit right now — please try again later.');
+      }
+    } catch {
+      setSubmitMsg('Could not submit right now — please try again later.');
+    }
+    setSubmitting(false);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -83,6 +109,44 @@ export default function AdminDashboardPage() {
               </p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-card border-border mb-8">
+        <CardHeader>
+          <CardTitle className="text-foreground">Search Engine Indexing</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-start gap-3 flex-1">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 border border-sky-500/20">
+                <Globe className="h-5 w-5 text-sky-400" />
+              </div>
+              <div className="text-sm text-muted-foreground">
+                <p className="text-foreground font-medium">Instant indexing (IndexNow)</p>
+                <p className="mt-0.5">
+                  New scripts are auto-submitted to search engines the moment they&apos;re published.
+                  Use this to resubmit every page at once — handy right after launch.
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={submitToSearchEngines}
+              disabled={submitting}
+              className="bg-sky-600 hover:bg-sky-700 text-white shrink-0"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Submitting…
+                </>
+              ) : (
+                <>
+                  <Globe className="h-4 w-4 mr-2" /> Submit all pages
+                </>
+              )}
+            </Button>
+          </div>
+          {submitMsg && <p className="mt-3 text-sm text-muted-foreground">{submitMsg}</p>}
         </CardContent>
       </Card>
 
