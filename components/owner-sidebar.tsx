@@ -15,6 +15,7 @@ import {
   Shield,
   Crown,
   Wallet,
+  Power,
 } from 'lucide-react';
 
 const OWNER_LINKS = [
@@ -34,10 +35,20 @@ const ADMIN_LINKS = [
 
 export function OwnerSidebar() {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logout, logoutAll } = useAuth();
 
   const isActive = (href: string) =>
     href === '/owner' ? pathname === '/owner' : pathname.startsWith(href);
+
+  const handleLogoutAll = async () => {
+    if (
+      window.confirm(
+        'Log out of all devices? You will need to sign in again everywhere, including here.'
+      )
+    ) {
+      await logoutAll();
+    }
+  };
 
   return (
     <aside className="fixed left-0 top-0 h-full w-60 bg-card border-r border-border flex flex-col z-50">
@@ -100,6 +111,13 @@ export function OwnerSidebar() {
         >
           <LogOut className="h-4 w-4" />
           Logout
+        </button>
+        <button
+          onClick={handleLogoutAll}
+          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-amber-400 hover:bg-amber-500/10 transition-colors w-full"
+        >
+          <Power className="h-4 w-4" />
+          Log out all devices
         </button>
       </div>
     </aside>

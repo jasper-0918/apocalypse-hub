@@ -29,7 +29,22 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 }
 
 export async function createSessionToken(user: SessionUser): Promise<string> {
-  return new SignJWT({ ...user })
+  // Embed the user's current token version so "log out everywhere" (which bumps
+  // the version) can invalidate every token issued before it.
+  let tv = 0;
+  try {
+    const supabase = createServerClient();
+    const { data } = await supabase
+      .from('users')
+      .select('token_version')
+      .eq('id', user.id)
+      .maybeSingle();
+    tv = data?.token_version ?? 0;
+  } catch {
+    /* default 0 if the column/DB isn't reachable */
+  }
+
+  return new SignJWT({ ...user, tv })
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('7d')
     .setIssuedAt()
@@ -59,8 +74,39 @@ export async function getUserFromRequest(request: Request): Promise<SessionUser 
   }
 
   for (const token of candidates) {
-    const user = await verifySessionToken(token);
-    if (user) return user;
+    try {
+      const { payload } = await jwtVerify(token, secret);
+      const id = (payload as any).id as string | undefined;
+      if (!id) continue;
+
+      // Reject tokens whose version is stale (logged out everywhere) or whose
+      // user no longer exists (deleted). Fail-open only on a DB/network error so
+      // a Supabase hiccup can't sign everyone out.
+      try {
+        const supabase = createServerClient();
+        const { data, error } = await supabase
+          .from('users')
+          .select('token_version')
+          .eq('id', id)
+          .maybeSingle();
+        if (!error) {
+          if (!data) continue; // user deleted
+          if ((data.token_version ?? 0) !== ((payload as any).tv ?? 0)) continue; // invalidated
+        }
+      } catch {
+        /* fail-open: accept the (cryptographically valid) token */
+      }
+
+      return {
+        id,
+        email: (payload as any).email,
+        username: (payload as any).username,
+        role: (payload as any).role,
+        plan: (payload as any).plan,
+      };
+    } catch {
+      // Not a valid token — try the next candidate.
+    }
   }
   return null;
 }

@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Flame, Loader2, KeyRound, CheckCircle2 } from 'lucide-react';
+import { PasswordStrength } from '@/components/password-strength';
+import { isPasswordValid } from '@/lib/password';
 
 export default function ResetPasswordPage() {
   const [token, setToken] = useState('');
@@ -91,11 +93,12 @@ export default function ResetPasswordPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="New password (min 8 characters)"
+                  placeholder="New password (min 8, letter & number)"
                   className="bg-secondary border-border"
                   minLength={8}
                   required
                 />
+                <PasswordStrength password={password} />
                 <Input
                   type="password"
                   value={confirm}
@@ -108,7 +111,7 @@ export default function ResetPasswordPage() {
                 {error && <p className="text-sm text-red-400">{error}</p>}
                 <Button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !isPasswordValid(password) || password !== confirm}
                   className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold h-11"
                 >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Reset password'}

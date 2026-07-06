@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Flame, Loader2 } from 'lucide-react';
+import { PasswordStrength } from '@/components/password-strength';
+import { isPasswordValid } from '@/lib/password';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -100,8 +102,9 @@ export default function RegisterPage() {
                   required
                   minLength={8}
                   className="bg-secondary border-border"
-                  placeholder="At least 8 characters"
+                  placeholder="At least 8 chars, with a letter & number"
                 />
+                <PasswordStrength password={password} />
               </div>
 
               {error && (
@@ -110,7 +113,7 @@ export default function RegisterPage() {
 
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !isPasswordValid(password)}
                 className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold h-11"
               >
                 {loading ? (

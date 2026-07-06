@@ -1,9 +1,17 @@
 import { z } from 'zod';
 
+// Shared password policy (mirrors lib/password.ts on the client): at least 8
+// characters, one letter, one number.
+export const passwordField = z
+  .string()
+  .min(8, 'Password must be at least 8 characters')
+  .regex(/[a-zA-Z]/, 'Password must include at least one letter')
+  .regex(/[0-9]/, 'Password must include at least one number');
+
 export const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
   username: z.string().min(3, 'Username must be at least 3 characters').max(20, 'Username must be at most 20 characters').regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: passwordField,
 });
 
 export const loginSchema = z.object({
@@ -17,7 +25,7 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   token: z.string().min(10, 'Invalid or missing reset token'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: passwordField,
 });
 
 export const scriptUploadSchema = z.object({

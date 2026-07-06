@@ -17,6 +17,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, username: string, password: string) => Promise<void>;
   logout: () => void;
+  logoutAll: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -88,8 +89,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/');
   };
 
+  const logoutAll = async () => {
+    const token = localStorage.getItem('ah_session');
+    try {
+      await fetch('/api/auth/logout-all', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+    } catch {
+      // Best-effort; we clear locally regardless.
+    }
+    localStorage.removeItem('ah_session');
+    setUser(null);
+    router.push('/login');
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, logoutAll }}>
       {children}
     </AuthContext.Provider>
   );
