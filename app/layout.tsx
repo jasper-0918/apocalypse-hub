@@ -32,11 +32,13 @@ export const metadata: Metadata = {
     title: 'Apocalypse Hub — Free Roblox Scripts & Key System',
     description: SITE_DESCRIPTION,
     locale: 'en_US',
+    images: ['/api/og?title=Apocalypse%20Hub&subtitle=Free%20Roblox%20Scripts%20%26%20Key%20System'],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Apocalypse Hub — Free Roblox Scripts & Key System',
     description: SITE_DESCRIPTION,
+    images: ['/api/og?title=Apocalypse%20Hub&subtitle=Free%20Roblox%20Scripts%20%26%20Key%20System'],
   },
   robots: {
     index: true,

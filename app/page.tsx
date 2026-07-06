@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScriptHubCard, HubScript } from '@/components/script-hub-card';
 import { SiteHeader } from '@/components/site-header';
+import { slugify } from '@/lib/utils';
 import {
   Flame,
   Key,
@@ -21,13 +22,18 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
+interface GameLink {
+  slug: string;
+  name: string;
+  count: number;
+}
+
 export default function HomePage() {
   const [scripts, setScripts] = useState<HubScript[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [activeGame, setActiveGame] = useState('All');
   const [sort, setSort] = useState<'recent' | 'trending'>('recent');
-  const [games, setGames] = useState<string[]>(['All']);
+  const [games, setGames] = useState<GameLink[]>([]);
 
   useEffect(() => {
     const fetchScripts = async () => {
@@ -35,7 +41,6 @@ export default function HomePage() {
       try {
         const params = new URLSearchParams();
         if (search) params.set('search', search);
-        if (activeGame !== 'All') params.set('game', activeGame);
         if (sort === 'trending') params.set('sort', 'trending');
         const res = await fetch(`/api/scripts/catalog?${params}`);
         if (res.ok) setScripts(await res.json());
@@ -45,14 +50,13 @@ export default function HomePage() {
       setLoading(false);
     };
     fetchScripts();
-  }, [search, activeGame, sort]);
+  }, [search, sort]);
 
   useEffect(() => {
-    fetch('/api/owner/games')
+    fetch('/api/scripts/games')
       .then((r) => (r.ok ? r.json() : []))
-      .then((data: any[]) => {
-        const names = data.filter((g) => g.is_active).map((g: any) => g.name);
-        if (names.length > 0) setGames(['All', ...names]);
+      .then((data: GameLink[]) => {
+        if (Array.isArray(data) && data.length) setGames(data.slice(0, 24));
       })
       .catch(() => {});
   }, []);
@@ -130,20 +134,22 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Game filter chips */}
-        {games.length > 1 && (
-          <div className="flex gap-2 flex-wrap mb-6">
-            {games.map((game) => (
-              <Button
-                key={game}
-                variant={activeGame === game ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setActiveGame(game)}
-                className={activeGame === game ? 'bg-red-600 hover:bg-red-700 text-white' : 'border-border text-muted-foreground hover:text-foreground'}
-              >
-                {game}
-              </Button>
-            ))}
+        {/* Browse by game — links to dedicated /game/<slug> landing pages */}
+        {games.length > 0 && (
+          <div className="mb-6">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">Browse by game</p>
+            <div className="flex gap-2 flex-wrap">
+              {games.map((game) => (
+                <Link
+                  key={game.slug}
+                  href={`/game/${game.slug}`}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-red-900/40 hover:text-foreground"
+                >
+                  {game.name}
+                  <span className="text-xs text-muted-foreground/70">{game.count}</span>
+                </Link>
+              ))}
+            </div>
           </div>
         )}
 
@@ -160,8 +166,8 @@ export default function HomePage() {
               </div>
               <h2 className="text-xl font-semibold text-foreground mb-2">No scripts found</h2>
               <p className="text-muted-foreground max-w-md mb-4">
-                {search || activeGame !== 'All'
-                  ? 'Try adjusting your search or game filter.'
+                {search
+                  ? 'Try adjusting your search.'
                   : 'No scripts have been published yet. Be the first to upload!'}
               </p>
               <Link href="/register">

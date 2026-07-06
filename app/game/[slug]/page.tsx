@@ -9,6 +9,12 @@ import { SITE_URL, SITE_NAME } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 
+function ogFor(name: string): string {
+  return `/api/og?title=${encodeURIComponent(`${name} Scripts`)}&subtitle=${encodeURIComponent(
+    `Free ${name} Roblox scripts`
+  )}`;
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -25,6 +31,7 @@ export async function generateMetadata({
     `Browse ${n} free ${data.name} Roblox script${n === 1 ? '' : 's'} on ${SITE_NAME}. ` +
     `Unlock with a quick key system, copy the loadstring, and run it in your executor.`;
   const url = `${SITE_URL}/game/${params.slug}`;
+  const image = ogFor(data.name);
 
   return {
     title,
@@ -43,8 +50,9 @@ export async function generateMetadata({
       title: `${title} | ${SITE_NAME}`,
       description: description.slice(0, 160),
       siteName: SITE_NAME,
+      images: [image],
     },
-    twitter: { card: 'summary_large_image', title: `${title} | ${SITE_NAME}` },
+    twitter: { card: 'summary_large_image', title: `${title} | ${SITE_NAME}`, images: [image] },
   };
 }
 

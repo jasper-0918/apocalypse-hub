@@ -28,7 +28,12 @@ export async function generateMetadata({
   const title = `${script.name}${gameLabel} — Roblox Script`;
   const description = metaDescription(script.name, script.game, script.description);
   const url = `${SITE_URL}/script/${script.slug}`;
-  const images = script.thumbnail_url ? [{ url: script.thumbnail_url, alt: script.name }] : undefined;
+  const ogImage =
+    script.thumbnail_url ||
+    `/api/og?title=${encodeURIComponent(script.name)}&subtitle=${encodeURIComponent(
+      script.game && script.game !== 'Universal' ? `${script.game} script` : 'Roblox script'
+    )}`;
+  const images = [{ url: ogImage, alt: script.name }];
 
   return {
     title,
@@ -54,7 +59,7 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title,
       description,
-      images: script.thumbnail_url ? [script.thumbnail_url] : undefined,
+      images: [ogImage],
     },
   };
 }
