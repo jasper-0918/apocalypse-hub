@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
 import { generateKeyValue, getKeyExpiry } from '@/lib/keygen';
+import { deleteExpiredKeys } from '@/lib/keys';
 import { earningsForCompletion, UNIQUE_COMPLETION_WINDOW_HOURS } from '@/lib/earnings';
 import { isGateEnforced } from '@/lib/keyproviders';
 
@@ -93,7 +94,9 @@ export async function POST(req: NextRequest) {
   }
 
   const now = new Date().toISOString();
-  const today = new Date().toISOString().split('T')[0];
+
+  // Auto-purge every expired key so nothing stale lingers in the system.
+  await deleteExpiredKeys(supabase);
 
   // Block only if there is a currently ACTIVE (non-expired) key
   if (userId) {
@@ -132,97 +135,28 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Get or auto-generate today's pool
-  let { data: pool } = await supabase
-    .from('daily_key_pools')
-    .select('id')
-    .eq('date', today)
-    .eq('generated', true)
-    .maybeSingle();
-
-  if (!pool) {
-    const keyValues = Array.from({ length: 100 }, () => generateKeyValue());
-    const createdKeys: any[] = [];
-    for (const value of keyValues) {
-      const { data: key } = await supabase
-        .from('keys')
-        .insert({ value, expires_at: getKeyExpiry(), is_active: false, is_used: false })
-        .select()
-        .single();
-      if (key) createdKeys.push(key);
-    }
-    const { data: newPool } = await supabase
-      .from('daily_key_pools')
-      .upsert({ date: today, generated: true }, { onConflict: 'date' })
-      .select()
-      .single();
-    if (newPool) {
-      pool = newPool;
-      for (const key of createdKeys) {
-        await supabase.from('daily_key_pool_keys').insert({ pool_id: newPool.id, key_id: key.id });
-      }
-    }
-  }
-
-  if (!pool) {
-    return NextResponse.json(
-      { error: 'Key pool unavailable. Try again in a moment.' },
-      { status: 503 }
-    );
-  }
-
-  // Find an available key in today's pool.
-  const { data: poolKeys } = await supabase
-    .from('daily_key_pool_keys')
-    .select('key_id')
-    .eq('pool_id', pool.id);
-
-  let availableKey: any = null;
-  if (poolKeys && poolKeys.length > 0) {
-    const keyIds = poolKeys.map((pk: any) => pk.key_id);
-    const { data } = await supabase
-      .from('keys')
-      .select('*')
-      .in('id', keyIds)
-      .is('assigned_to', null)
-      .eq('is_active', false)
-      .limit(1)
-      .maybeSingle();
-    availableKey = data;
-  }
-
-  // Pool exhausted → mint a fresh key on demand so users are never blocked.
-  if (!availableKey) {
-    const { data: fresh } = await supabase
-      .from('keys')
-      .insert({ value: generateKeyValue(), expires_at: getKeyExpiry(), is_active: false, is_used: false })
-      .select()
-      .single();
-    if (fresh) {
-      await supabase.from('daily_key_pool_keys').insert({ pool_id: pool.id, key_id: fresh.id });
-      availableKey = fresh;
-    }
-  }
-
-  if (!availableKey) {
-    return NextResponse.json(
-      { error: 'Key pool unavailable. Try again in a moment.' },
-      { status: 503 }
-    );
-  }
-
-  const { data: activatedKey } = await supabase
+  // Mint a fresh key on demand for this claimer — no daily pool, no admin
+  // action required. Each successful claim creates exactly one active key.
+  const { data: activatedKey, error: mintError } = await supabase
     .from('keys')
-    .update({
+    .insert({
+      value: generateKeyValue(),
+      expires_at: getKeyExpiry(expiryHours),
+      is_active: true,
+      is_used: false,
       assigned_to: userId,
       claimed_by_session: sessionId,
-      is_active: true,
-      activated_at: new Date().toISOString(),
-      expires_at: getKeyExpiry(expiryHours),
+      activated_at: now,
     })
-    .eq('id', availableKey.id)
     .select()
     .single();
+
+  if (mintError || !activatedKey) {
+    return NextResponse.json(
+      { error: 'Could not generate a key. Please try again in a moment.' },
+      { status: 503 }
+    );
+  }
 
   await supabase.from('key_requests').insert({
     user_id: userId,

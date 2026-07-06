@@ -3,16 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, FileCode2, Key, Activity, Loader2, Zap, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Users, FileCode2, Key, Activity, Loader2, Sparkles } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
   const [stats, setStats] = useState({ users: 0, scripts: 0, keys: 0, activeKeys: 0 });
-  const [pool, setPool] = useState<{ generated: boolean; date: string; keyCount: number } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
   const [recentUsers, setRecentUsers] = useState<any[]>([]);
 
   useEffect(() => {
@@ -20,13 +17,11 @@ export default function AdminDashboardPage() {
       const token = localStorage.getItem('ah_session');
       if (!token) return;
       try {
-        const [statsRes, poolRes, usersRes] = await Promise.all([
+        const [statsRes, usersRes] = await Promise.all([
           fetch('/api/admin/stats', { headers: { Authorization: `Bearer ${token}` } }),
-          fetch('/api/admin/pool', { headers: { Authorization: `Bearer ${token}` } }),
           fetch('/api/admin/users?limit=10', { headers: { Authorization: `Bearer ${token}` } }),
         ]);
         if (statsRes.ok) setStats(await statsRes.json());
-        if (poolRes.ok) setPool(await poolRes.json());
         if (usersRes.ok) setRecentUsers((await usersRes.json()));
       } catch {
         // Silently fail
@@ -35,24 +30,6 @@ export default function AdminDashboardPage() {
     };
     fetchData();
   }, []);
-
-  const handleGenerateKeys = async () => {
-    const token = localStorage.getItem('ah_session');
-    if (!token) return;
-    setGenerating(true);
-    try {
-      const res = await fetch('/api/keys/generate', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        setPool({ generated: true, date: new Date().toISOString().split('T')[0], keyCount: 10 });
-      }
-    } catch {
-      // Silently fail
-    }
-    setGenerating(false);
-  };
 
   if (loading) {
     return (
@@ -91,29 +68,20 @@ export default function AdminDashboardPage() {
 
       <Card className="bg-card border-border mb-8">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-foreground">Daily Key Pool</CardTitle>
-            {!pool?.generated && (
-              <Button onClick={handleGenerateKeys} disabled={generating} className="bg-red-600 hover:bg-red-700 text-white" size="sm">
-                {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
-                Generate 10 Keys
-              </Button>
-            )}
-          </div>
+          <CardTitle className="text-foreground">Key Generation</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2">
-            {pool?.generated ? (
-              <>
-                <CheckCircle className="h-5 w-5 text-green-400" />
-                <span className="text-green-400 text-sm">{pool.keyCount} keys generated for {pool.date}</span>
-              </>
-            ) : (
-              <>
-                <AlertTriangle className="h-5 w-5 text-amber-400" />
-                <span className="text-amber-400 text-sm">No keys generated yet for today</span>
-              </>
-            )}
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-500/10 border border-red-500/20">
+              <Sparkles className="h-5 w-5 text-red-400" />
+            </div>
+            <div className="text-sm text-muted-foreground">
+              <p className="text-foreground font-medium">Fully automatic</p>
+              <p className="mt-0.5">
+                Keys are generated on demand the moment a user completes the key system, and expired
+                keys are deleted automatically. There&apos;s nothing to generate or clean up here.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
