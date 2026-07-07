@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Flame, Loader2, KeyRound, CheckCircle2 } from 'lucide-react';
+import { Loader2, KeyRound, CheckCircle2 } from 'lucide-react';
+import { Logo } from '@/components/logo';
 import { PasswordStrength } from '@/components/password-strength';
 import { isPasswordValid } from '@/lib/password';
 
@@ -60,8 +61,8 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
         <Link href="/" className="flex items-center justify-center gap-2 mb-6">
-          <Flame className="h-7 w-7 text-red-500" />
-          <span className="text-xl font-bold text-foreground">Apocalypse Hub</span>
+          <Logo className="h-7 w-7" />
+          <span className="text-xl font-bold text-foreground">Apocalypse Blox Hub</span>
         </Link>
         <Card className="bg-card border-border">
           <CardHeader className="text-center">

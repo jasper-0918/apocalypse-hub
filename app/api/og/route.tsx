@@ -6,7 +6,7 @@ export const runtime = 'edge';
 // needed on the edge: /api/og?title=...&subtitle=...
 export function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const title = (searchParams.get('title') || 'Apocalypse Hub').slice(0, 90);
+  const title = (searchParams.get('title') || 'Apocalypse Blox Hub').slice(0, 90);
   const subtitle = (searchParams.get('subtitle') || 'Free Roblox Scripts & Key System').slice(0, 120);
 
   return new ImageResponse(
@@ -34,7 +34,7 @@ export function GET(req: Request) {
               marginRight: '22px',
             }}
           />
-          <div style={{ color: '#ffffff', fontSize: '30px', fontWeight: 700 }}>Apocalypse Hub</div>
+          <div style={{ color: '#ffffff', fontSize: '30px', fontWeight: 700 }}>Apocalypse Blox Hub</div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>

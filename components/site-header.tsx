@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
-import { Flame, Home, TrendingUp, ScrollText, BookOpen, Key, LayoutDashboard } from 'lucide-react';
+import { Home, TrendingUp, ScrollText, BookOpen, Key, LayoutDashboard } from 'lucide-react';
+import { Logo } from '@/components/logo';
 
 const NAV = [
   { href: '/', label: 'Home', icon: Home },
@@ -20,8 +21,8 @@ export function SiteHeader({ active }: { active?: string }) {
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          <Flame className="h-7 w-7 text-red-500" />
-          <span className="text-xl font-bold text-foreground hidden sm:inline">Apocalypse Hub</span>
+          <Logo className="h-7 w-7" />
+          <span className="text-xl font-bold text-foreground hidden sm:inline">Apocalypse Blox Hub</span>
         </Link>
 
         <nav className="flex items-center gap-1 sm:gap-2 flex-1 justify-center">

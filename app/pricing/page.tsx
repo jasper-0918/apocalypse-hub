@@ -2,7 +2,8 @@
 
 import { PricingTable } from '@/components/pricing-table';
 import { Button } from '@/components/ui/button';
-import { Flame, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { Logo } from '@/components/logo';
 import Link from 'next/link';
 
 export default function PricingPage() {
@@ -16,12 +17,12 @@ export default function PricingPage() {
 
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Flame className="h-8 w-8 text-red-500" />
-            <span className="text-2xl font-bold text-foreground">Apocalypse Hub</span>
+            <Logo className="h-8 w-8" />
+            <span className="text-2xl font-bold text-foreground">Apocalypse Blox Hub</span>
           </div>
           <h1 className="text-4xl font-extrabold text-foreground mb-4">Choose Your Plan</h1>
           <p className="text-muted-foreground text-lg max-w-lg mx-auto">
-            Protect your scripts and manage keys with Apocalypse Hub
+            Protect your scripts and manage keys with Apocalypse Blox Hub
           </p>
         </div>
 

@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Flame, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { Logo } from '@/components/logo';
 import { PasswordStrength } from '@/components/password-strength';
 import { isPasswordValid } from '@/lib/password';
 
@@ -39,8 +40,8 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <Flame className="h-8 w-8 text-red-500" />
-            <span className="text-2xl font-bold text-foreground">Apocalypse Hub</span>
+            <Logo className="h-8 w-8" />
+            <span className="text-2xl font-bold text-foreground">Apocalypse Blox Hub</span>
           </Link>
           <p className="text-muted-foreground">Create your account</p>
         </div>
@@ -48,7 +49,7 @@ export default function RegisterPage() {
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-foreground">Create Account</CardTitle>
-            <CardDescription className="text-muted-foreground">Join Apocalypse Hub to protect your scripts</CardDescription>
+            <CardDescription className="text-muted-foreground">Join Apocalypse Blox Hub to protect your scripts</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">

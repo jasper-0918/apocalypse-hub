@@ -131,7 +131,7 @@ export default function ScriptsPage() {
           </div>
           <h2 className="text-xl font-semibold text-foreground mb-2">No scripts yet</h2>
           <p className="text-muted-foreground mb-6 max-w-md">
-            Upload your first Lua script to protect it with the Apocalypse Hub key system.
+            Upload your first Lua script to protect it with the Apocalypse Blox Hub key system.
           </p>
           <Link href="/dashboard/scripts/upload">
             <Button className="bg-red-600 hover:bg-red-700 text-white">

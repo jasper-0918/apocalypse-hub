@@ -10,11 +10,11 @@ import {
   Key,
   ArrowLeft,
   Shield,
-  Flame,
   HeadphonesIcon,
   BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Logo } from '@/components/logo';
 
 const links = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard },
@@ -33,8 +33,8 @@ export function AdminSidebar() {
     <aside className="fixed left-0 top-0 bottom-0 w-64 bg-card border-r border-border flex flex-col z-40">
       <div className="p-6 border-b border-border">
         <div className="flex items-center gap-2 mb-1">
-          <Flame className="h-7 w-7 text-red-500" />
-          <span className="text-xl font-bold text-foreground">Apocalypse Hub</span>
+          <Logo className="h-7 w-7" />
+          <span className="text-xl font-bold text-foreground">Apocalypse Blox Hub</span>
         </div>
         <div className="flex items-center gap-1.5 text-amber-500 text-xs font-semibold px-1">
           <Shield className="h-3 w-3" />

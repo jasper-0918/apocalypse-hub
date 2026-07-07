@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto';
 
 // ---------------------------------------------------------------------------
-// Apocalypse Hub — Lua protector
+// Apocalypse Blox Hub — Lua protector
 //
 // Strategy: treat the WHOLE pasted script (loader or full source) as opaque
 // bytes, encrypt them with a per-request rolling cipher, and emit a small
@@ -80,8 +80,8 @@ export function obfuscateLua(lua: string, scriptId: string): string {
 
   // Everything lives in an IIFE so no locals leak into the payload's globals.
   return `
--- Apocalypse Hub | Protected Script [${scriptId}] #${token}
--- Gated by the Apocalypse Hub key system. Do not redistribute.
+-- Apocalypse Blox Hub | Protected Script [${scriptId}] #${token}
+-- Gated by the Apocalypse Blox Hub key system. Do not redistribute.
 return (function()
   local ${J1} = ${rint(1000, 9999)}
   for ${J2} = 1, ${rint(2, 6)} do ${J1} = (${J1} * 31 + 7) % ${rint(101, 997)} end

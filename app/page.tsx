@@ -6,9 +6,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScriptHubCard, HubScript } from '@/components/script-hub-card';
 import { SiteHeader } from '@/components/site-header';
+import { Logo } from '@/components/logo';
 import { slugify } from '@/lib/utils';
 import {
-  Flame,
   Key,
   Search,
   Copy,
@@ -72,7 +72,7 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(239,68,68,0.06)_0%,_transparent_50%)]" />
         <div className="relative max-w-6xl mx-auto px-4 py-12">
           <h1 className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight mb-3 text-center">
-            Apocalypse <span className="text-red-500 text-glow-red">Hub</span>
+            Apocalypse Blox <span className="text-red-500 text-glow-red">Hub</span>
           </h1>
           <p className="text-muted-foreground text-lg mb-8 max-w-2xl mx-auto text-center">
             Search the best Lua scripts, key-protected and obfuscated — uploaded by the community.
@@ -253,8 +253,8 @@ export default function HomePage() {
       <footer className="border-t border-border py-6">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Flame className="h-4 w-4 text-red-500" />
-            <span className="text-sm text-muted-foreground">Apocalypse Hub</span>
+            <Logo className="h-4 w-4" />
+            <span className="text-sm text-muted-foreground">Apocalypse Blox Hub</span>
           </div>
           <div className="flex gap-5 text-xs text-muted-foreground">
             <Link href="/get-key" className="hover:text-foreground transition-colors">Get Key</Link>

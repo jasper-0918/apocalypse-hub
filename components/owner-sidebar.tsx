@@ -59,7 +59,7 @@ export function OwnerSidebar() {
           </div>
           <div>
             <p className="text-sm font-bold text-foreground">Owner Panel</p>
-            <p className="text-xs text-amber-400">Apocalypse Hub</p>
+            <p className="text-xs text-amber-400">Apocalypse Blox Hub</p>
           </div>
         </div>
       </div>

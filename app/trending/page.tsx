@@ -29,7 +29,7 @@ export default function TrendingPage() {
           <TrendingUp className="h-7 w-7 text-red-500" />
           <h1 className="text-3xl font-bold text-foreground">Trending Scripts</h1>
         </div>
-        <p className="text-muted-foreground mb-6">The most-viewed scripts on Apocalypse Hub right now.</p>
+        <p className="text-muted-foreground mb-6">The most-viewed scripts on Apocalypse Blox Hub right now.</p>
 
         {loading ? (
           <div className="flex items-center justify-center py-20">

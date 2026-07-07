@@ -15,7 +15,7 @@ export function generateCode(): string {
 // Shared, branded HTML shell so every email looks consistent.
 function wrap(inner: string): string {
   return `<div style="font-family:sans-serif;max-width:480px;margin:auto">
-    <h2 style="color:#ef4444">Apocalypse Hub</h2>
+    <h2 style="color:#ef4444">Apocalypse Blox Hub</h2>
     ${inner}
   </div>`;
 }
@@ -29,7 +29,7 @@ async function send(opts: { to: string; subject: string; text: string; html: str
       service: 'gmail',
       auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
     });
-    await transporter.sendMail({ from: `"Apocalypse Hub" <${process.env.GMAIL_USER}>`, ...opts });
+    await transporter.sendMail({ from: `"Apocalypse Blox Hub" <${process.env.GMAIL_USER}>`, ...opts });
     return true;
   } catch {
     return false;
@@ -41,9 +41,9 @@ export async function sendVerificationEmail(to: string, code: string): Promise<b
   const verifyLink = `${SITE_URL}/verify?email=${encodeURIComponent(to)}&code=${encodeURIComponent(code)}`;
   return send({
     to,
-    subject: `Your Apocalypse Hub verification code: ${code}`,
+    subject: `Your Apocalypse Blox Hub verification code: ${code}`,
     text:
-      `Your Apocalypse Hub verification code is ${code}. It expires in 15 minutes.\n\n` +
+      `Your Apocalypse Blox Hub verification code is ${code}. It expires in 15 minutes.\n\n` +
       `Or verify instantly by opening this link:\n${verifyLink}\n\n` +
       `If you didn't sign up, ignore this email.`,
     html: wrap(`
@@ -62,9 +62,9 @@ export async function sendVerificationEmail(to: string, code: string): Promise<b
 export async function sendPasswordResetEmail(to: string, link: string): Promise<boolean> {
   return send({
     to,
-    subject: 'Reset your Apocalypse Hub password',
+    subject: 'Reset your Apocalypse Blox Hub password',
     text:
-      `We received a request to reset your Apocalypse Hub password.\n\n` +
+      `We received a request to reset your Apocalypse Blox Hub password.\n\n` +
       `Open this link to choose a new password (expires in 30 minutes):\n${link}\n\n` +
       `If you didn't request this, ignore this email — your password won't change.`,
     html: wrap(`
@@ -82,9 +82,9 @@ export async function sendPasswordResetEmail(to: string, link: string): Promise<
 export async function sendPasswordChangedEmail(to: string): Promise<boolean> {
   return send({
     to,
-    subject: 'Your Apocalypse Hub password was changed',
+    subject: 'Your Apocalypse Blox Hub password was changed',
     text:
-      `Your Apocalypse Hub password was just changed.\n\n` +
+      `Your Apocalypse Blox Hub password was just changed.\n\n` +
       `If this was you, no action is needed. If it wasn't, reset your password now at ` +
       `${SITE_URL}/forgot-password and check your account.`,
     html: wrap(`
@@ -102,9 +102,9 @@ export async function sendLoginAlertEmail(
 ): Promise<boolean> {
   return send({
     to,
-    subject: 'New sign-in to your Apocalypse Hub account',
+    subject: 'New sign-in to your Apocalypse Blox Hub account',
     text:
-      `A new sign-in to your Apocalypse Hub account was detected.\n\n` +
+      `A new sign-in to your Apocalypse Blox Hub account was detected.\n\n` +
       `When: ${info.when}\nIP: ${info.ip}\nDevice: ${info.userAgent}\n\n` +
       `If this was you, ignore this email. If not, reset your password at ` +
       `${SITE_URL}/forgot-password and use "Log out all devices".`,

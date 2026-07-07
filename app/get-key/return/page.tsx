@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Flame, Loader2, CheckCircle, XCircle, Key, Copy, Clock } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Key, Copy, Clock } from 'lucide-react';
+import { Logo } from '@/components/logo';
 
 type Phase = 'verifying' | 'claiming' | 'done' | 'error';
 
@@ -100,8 +101,8 @@ export default function KeyReturnPage() {
       <header className="border-b border-border bg-background/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center">
           <Link href="/" className="flex items-center gap-2.5">
-            <Flame className="h-7 w-7 text-red-500" />
-            <span className="text-xl font-bold text-foreground">Apocalypse Hub</span>
+            <Logo className="h-7 w-7" />
+            <span className="text-xl font-bold text-foreground">Apocalypse Blox Hub</span>
           </Link>
         </div>
       </header>

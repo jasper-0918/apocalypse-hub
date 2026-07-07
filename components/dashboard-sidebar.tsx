@@ -10,7 +10,6 @@ import {
   CreditCard,
   LogOut,
   Shield,
-  Flame,
   HeadphonesIcon,
   Crown,
   Wallet,
@@ -19,6 +18,7 @@ import {
   Home,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Logo } from '@/components/logo';
 
 const links = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -48,8 +48,8 @@ export function DashboardSidebar() {
     <aside className="fixed left-0 top-0 bottom-0 w-64 bg-card border-r border-border flex flex-col z-40">
       <div className="p-6 border-b border-border">
         <Link href="/" className="flex items-center gap-2">
-          <Flame className="h-7 w-7 text-red-500" />
-          <span className="text-xl font-bold text-foreground">Apocalypse Hub</span>
+          <Logo className="h-7 w-7" />
+          <span className="text-xl font-bold text-foreground">Apocalypse Blox Hub</span>
         </Link>
       </div>
 

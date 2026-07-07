@@ -40,7 +40,7 @@ export default function RulesPage() {
           <h1 className="text-3xl font-bold text-foreground">Rules</h1>
         </div>
         <p className="text-muted-foreground mb-8">
-          Apocalypse Hub is a shared marketplace. These rules keep it safe for players and fair for creators.
+          Apocalypse Blox Hub is a shared marketplace. These rules keep it safe for players and fair for creators.
           Breaking them can unpublish your scripts, void earnings, or ban your account.
         </p>
 

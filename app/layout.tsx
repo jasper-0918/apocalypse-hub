@@ -10,8 +10,8 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Apocalypse Hub — Free Roblox Scripts & Key System',
-    template: '%s | Apocalypse Hub',
+    default: 'Apocalypse Blox Hub — Free Roblox Scripts & Key System',
+    template: '%s | Apocalypse Blox Hub',
   },
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
@@ -31,16 +31,16 @@ export const metadata: Metadata = {
     type: 'website',
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: 'Apocalypse Hub — Free Roblox Scripts & Key System',
+    title: 'Apocalypse Blox Hub — Free Roblox Scripts & Key System',
     description: SITE_DESCRIPTION,
     locale: 'en_US',
-    images: ['/api/og?title=Apocalypse%20Hub&subtitle=Free%20Roblox%20Scripts%20%26%20Key%20System'],
+    images: ['/api/og?title=Apocalypse%20Blox%20Hub&subtitle=Free%20Roblox%20Scripts%20%26%20Key%20System'],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Apocalypse Hub — Free Roblox Scripts & Key System',
+    title: 'Apocalypse Blox Hub — Free Roblox Scripts & Key System',
     description: SITE_DESCRIPTION,
-    images: ['/api/og?title=Apocalypse%20Hub&subtitle=Free%20Roblox%20Scripts%20%26%20Key%20System'],
+    images: ['/api/og?title=Apocalypse%20Blox%20Hub&subtitle=Free%20Roblox%20Scripts%20%26%20Key%20System'],
   },
   robots: {
     index: true,

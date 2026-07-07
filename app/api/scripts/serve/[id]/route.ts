@@ -20,7 +20,7 @@ export async function GET(
 
   if (!keyValue) {
     return new NextResponse(
-      `-- [Apocalypse Hub] ACCESS DENIED\n-- No key provided. Get your key at apocalypsehub.com/get-key\nerror("APOCALYPSE_HUB: Key required. Visit apocalypsehub.com/get-key to claim your free key.")`,
+      `-- [Apocalypse Blox Hub] ACCESS DENIED\n-- No key provided. Get your key at apocalypsehub.com/get-key\nerror("APOCALYPSE_HUB: Key required. Visit apocalypsehub.com/get-key to claim your free key.")`,
       { status: 403, headers: { 'Content-Type': 'text/plain' } }
     );
   }
@@ -37,7 +37,7 @@ export async function GET(
   if (!key || !isKeyValid(key)) {
     const reason = !key ? 'not found' : (new Date() > new Date(key.expires_at) ? 'expired' : 'inactive');
     return new NextResponse(
-      `-- [Apocalypse Hub] ACCESS DENIED\n-- Key ${reason}.\n-- Get a new key at apocalypsehub.com/get-key\nerror("APOCALYPSE_HUB: Key ${reason}. Visit apocalypsehub.com/get-key")`,
+      `-- [Apocalypse Blox Hub] ACCESS DENIED\n-- Key ${reason}.\n-- Get a new key at apocalypsehub.com/get-key\nerror("APOCALYPSE_HUB: Key ${reason}. Visit apocalypsehub.com/get-key")`,
       { status: 403, headers: { 'Content-Type': 'text/plain' } }
     );
   }
@@ -46,7 +46,7 @@ export async function GET(
   if (key.is_paid_key) {
     if (!uid || uid !== key.assigned_to) {
       return new NextResponse(
-        `-- [Apocalypse Hub] ACCESS DENIED\n-- This key is account-bound and cannot be used by other accounts.\nerror("APOCALYPSE_HUB: Account-bound key — use the loadstring from your dashboard.")`,
+        `-- [Apocalypse Blox Hub] ACCESS DENIED\n-- This key is account-bound and cannot be used by other accounts.\nerror("APOCALYPSE_HUB: Account-bound key — use the loadstring from your dashboard.")`,
         { status: 403, headers: { 'Content-Type': 'text/plain' } }
       );
     }
@@ -58,7 +58,7 @@ export async function GET(
       .maybeSingle();
     if (!keyOwner || (!PAID_PLANS.includes(keyOwner.plan) && keyOwner.role !== 'OWNER')) {
       return new NextResponse(
-        `-- [Apocalypse Hub] ACCESS DENIED\n-- The account associated with this key no longer has an active plan.\nerror("APOCALYPSE_HUB: Plan inactive. Renew your subscription at apocalypsehub.com")`,
+        `-- [Apocalypse Blox Hub] ACCESS DENIED\n-- The account associated with this key no longer has an active plan.\nerror("APOCALYPSE_HUB: Plan inactive. Renew your subscription at apocalypsehub.com")`,
         { status: 403, headers: { 'Content-Type': 'text/plain' } }
       );
     }
@@ -89,7 +89,7 @@ export async function GET(
       .maybeSingle();
     if (!scriptKey) {
       return new NextResponse(
-        `-- [Apocalypse Hub] ACCESS DENIED\n-- This key is not authorized for this script.\nerror("APOCALYPSE_HUB: Key not authorized for this script.")`,
+        `-- [Apocalypse Blox Hub] ACCESS DENIED\n-- This key is not authorized for this script.\nerror("APOCALYPSE_HUB: Key not authorized for this script.")`,
         { status: 403, headers: { 'Content-Type': 'text/plain' } }
       );
     }

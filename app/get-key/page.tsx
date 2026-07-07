@@ -3,7 +3,8 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { KeySystemGate } from '@/components/key-system-gate';
-import { Flame, ArrowLeft, Info } from 'lucide-react';
+import { ArrowLeft, Info } from 'lucide-react';
+import { Logo } from '@/components/logo';
 import { Card, CardContent } from '@/components/ui/card';
 import { siteBaseUrl } from '@/lib/utils';
 import { PAID_PLANS } from '@/lib/plans';
@@ -31,8 +32,8 @@ export default function GetKeyPage() {
       <header className="border-b border-border bg-background/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <Flame className="h-7 w-7 text-red-500" />
-            <span className="text-xl font-bold text-foreground">Apocalypse Hub</span>
+            <Logo className="h-7 w-7" />
+            <span className="text-xl font-bold text-foreground">Apocalypse Blox Hub</span>
           </Link>
           <Link href="/">
             <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
