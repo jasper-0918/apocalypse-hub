@@ -8,7 +8,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const supabase = createServerClient();
   const { data } = await supabase
     .from('script_comments')
-    .select('id, username, body, created_at')
+    .select('id, user_id, username, body, created_at')
     .eq('script_id', params.id)
     .order('created_at', { ascending: false })
     .limit(200);

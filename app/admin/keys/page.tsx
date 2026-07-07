@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Key, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, Key, CheckCircle, XCircle, Clock, Trash2 } from 'lucide-react';
 
 export default function AdminKeysPage() {
   const [keys, setKeys] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchKeys = async () => {
@@ -25,6 +27,23 @@ export default function AdminKeysPage() {
     };
     fetchKeys();
   }, []);
+
+  const revokeKey = async (id: string, value: string) => {
+    if (!window.confirm(`Revoke key ${value}? The user will need to claim a new one.`)) return;
+    const token = localStorage.getItem('ah_session');
+    if (!token) return;
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/admin/keys/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) setKeys((prev) => prev.filter((k) => k.id !== id));
+    } catch {
+      // Silently fail
+    }
+    setBusyId(null);
+  };
 
   const getKeyStatus = (key: any) => {
     const expired = new Date(key.expires_at) < new Date();
@@ -66,6 +85,21 @@ export default function AdminKeysPage() {
                       <StatusIcon className="h-3 w-3 mr-1" />
                       {status.label}
                     </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={busyId === key.id}
+                      onClick={() => revokeKey(key.id, key.value)}
+                      className="text-red-400 hover:text-red-300 border-red-500/30"
+                    >
+                      {busyId === key.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <>
+                          <Trash2 className="h-3.5 w-3.5 mr-1" /> Revoke
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

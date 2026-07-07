@@ -18,6 +18,10 @@ interface Stats {
 export default function DashboardPage() {
   const { user } = useAuth();
   const plan = user?.plan || 'FREE';
+  // Staff (owner/admin) show their role as the plan, since their perks come from
+  // their role — not from a purchased plan.
+  const isStaff = user?.role === 'ADMIN' || user?.role === 'OWNER';
+  const planDisplay = isStaff ? user!.role : plan;
   const [stats, setStats] = useState<Stats>({ scripts: 0, activeKeys: 0, scriptLimit: null, unlimited: false });
 
   useEffect(() => {
@@ -42,7 +46,7 @@ export default function DashboardPage() {
           Welcome back, {user?.display_name || user?.username}
         </h1>
         <p className="text-muted-foreground">
-          Plan: <span className="text-red-400 font-semibold">{plan}</span>
+          Plan: <span className="text-red-400 font-semibold">{planDisplay}</span>
           {plan === 'FREE' && (
             <Link href="/pricing" className="ml-2 text-sky-400 hover:underline text-sm">
               Upgrade now
@@ -98,7 +102,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Current Plan</p>
-                <p className="text-2xl font-bold text-red-400">{plan}</p>
+                <p className="text-2xl font-bold text-red-400">{planDisplay}</p>
               </div>
             </div>
           </CardContent>

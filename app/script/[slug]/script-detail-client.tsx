@@ -9,10 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScriptHubCard, ThumbnailFallback, HubScript } from '@/components/script-hub-card';
 import { SiteHeader } from '@/components/site-header';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { useAuth } from '@/components/auth-provider';
 import { timeAgo, formatCount, slugify } from '@/lib/utils';
 import {
   Key, Copy, CheckCircle, Download, ThumbsUp, ThumbsDown, Star,
-  AlertTriangle, Eye, Clock, Gamepad2, Loader2, User, MessageSquare, ArrowLeft,
+  AlertTriangle, Eye, Clock, Gamepad2, Loader2, User, MessageSquare, ArrowLeft, Trash2,
 } from 'lucide-react';
 
 interface Reactions {
@@ -29,6 +30,7 @@ export interface ScriptDetail extends HubScript {
 }
 interface Comment {
   id: string;
+  user_id?: string | null;
   username: string;
   body: string;
   created_at: string;
@@ -67,6 +69,8 @@ export function ScriptDetailClient({
   const [posting, setPosting] = useState(false);
   const [others, setOthers] = useState<HubScript[]>([]);
   const [loggedIn, setLoggedIn] = useState(false);
+  const { user } = useAuth();
+  const canModerate = user?.role === 'ADMIN' || user?.role === 'OWNER';
 
   const token = () => (typeof window !== 'undefined' ? localStorage.getItem('ah_session') : null);
 
@@ -158,6 +162,17 @@ export function ScriptDetailClient({
       alert(d.error || 'Failed to post comment.');
     }
     setPosting(false);
+  };
+
+  const deleteComment = async (commentId: string) => {
+    if (!script) return;
+    if (!window.confirm('Delete this comment?')) return;
+    const res = await fetch(`/api/scripts/${script.id}/comments/${commentId}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    });
+    if (res.ok) setComments((prev) => prev.filter((c) => c.id !== commentId));
+    else alert('Could not delete this comment.');
   };
 
   const longDesc = (script?.description?.length ?? 0) > 220;
@@ -377,20 +392,32 @@ export function ScriptDetailClient({
                   <p className="text-center text-muted-foreground py-6">No comments yet.</p>
                 ) : (
                   <div className="space-y-4">
-                    {comments.map((c) => (
-                      <div key={c.id} className="flex gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-foreground">{c.username}</span>
-                            <span className="text-xs text-muted-foreground">{timeAgo(c.created_at)}</span>
+                    {comments.map((c) => {
+                      const mine = !!user && c.user_id === user.id;
+                      return (
+                        <div key={c.id} className="group flex gap-3">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">
+                            <User className="h-4 w-4 text-muted-foreground" />
                           </div>
-                          <p className="text-sm text-foreground/90 whitespace-pre-wrap break-words">{c.body}</p>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-foreground">{c.username}</span>
+                              <span className="text-xs text-muted-foreground">{timeAgo(c.created_at)}</span>
+                              {(canModerate || mine) && (
+                                <button
+                                  onClick={() => deleteComment(c.id)}
+                                  title="Delete comment"
+                                  className="ml-auto text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
+                            <p className="text-sm text-foreground/90 whitespace-pre-wrap break-words">{c.body}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>

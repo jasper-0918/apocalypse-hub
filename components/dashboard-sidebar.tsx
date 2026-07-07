@@ -119,7 +119,9 @@ export function DashboardSidebar() {
           )}
           <div className="min-w-0">
             <p className="text-sm font-medium text-foreground truncate">{user?.display_name || user?.username}</p>
-            <p className="text-xs text-muted-foreground">{user?.plan} Plan</p>
+            <p className="text-xs text-muted-foreground">
+              {user?.role === 'ADMIN' || user?.role === 'OWNER' ? user.role : `${user?.plan} Plan`}
+            </p>
           </div>
         </div>
         <button
