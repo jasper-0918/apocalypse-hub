@@ -2,7 +2,7 @@
 
 import { SupportTicketsPanel } from '@/components/support-tickets-panel';
 
-export default function OwnerSupportPage() {
+export default function AdminSupportPage() {
   return (
     <div className="p-8">
       <div className="mb-8">

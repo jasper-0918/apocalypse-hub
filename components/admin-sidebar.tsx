@@ -10,15 +10,19 @@ import {
   Key,
   ArrowLeft,
   Shield,
-  Flame
+  Flame,
+  HeadphonesIcon,
+  BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const links = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard },
+  { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/scripts', label: 'Scripts', icon: FileCode2 },
   { href: '/admin/keys', label: 'Keys', icon: Key },
+  { href: '/admin/support', label: 'Support', icon: HeadphonesIcon },
 ];
 
 export function AdminSidebar() {

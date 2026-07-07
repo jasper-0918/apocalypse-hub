@@ -16,6 +16,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (body.status) update.status = body.status;
   if (body.response !== undefined) { update.response = body.response; update.responded_by = user.id; }
   if (body.priority) update.priority = body.priority;
+  // Claim: assign the ticket to the acting staff member (requires migration 021).
+  if (body.claim) {
+    update.assigned_to = user.id;
+    update.assigned_username = user.username;
+    if (!body.status) update.status = 'in_progress';
+  }
 
   const { data, error } = await supabase
     .from('support_tickets')
