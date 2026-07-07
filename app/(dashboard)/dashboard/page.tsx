@@ -1,22 +1,45 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/auth-provider';
+import { getToken } from '@/lib/session';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileCode2, Key, Crown, Plus, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { PLAN_BASE_LIMITS } from '@/lib/plans';
+
+interface Stats {
+  scripts: number;
+  activeKeys: number;
+  scriptLimit: number | null;
+  unlimited: boolean;
+}
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const plan = user?.plan || 'FREE';
-  const limit = PLAN_BASE_LIMITS[plan] ?? PLAN_BASE_LIMITS.FREE;
+  const [stats, setStats] = useState<Stats>({ scripts: 0, activeKeys: 0, scriptLimit: null, unlimited: false });
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+    fetch('/api/dashboard/stats', { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setStats(d); })
+      .catch(() => {});
+  }, []);
+
+  const limitLabel = stats.unlimited ? '∞' : stats.scriptLimit ?? 0;
+  const pct =
+    stats.unlimited || !stats.scriptLimit
+      ? 0
+      : Math.min(100, Math.round((stats.scripts / stats.scriptLimit) * 100));
 
   return (
     <div className="p-8 max-w-5xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-1">
-          Welcome back, {user?.username}
+          Welcome back, {user?.display_name || user?.username}
         </h1>
         <p className="text-muted-foreground">
           Plan: <span className="text-red-400 font-semibold">{plan}</span>
@@ -38,18 +61,18 @@ export default function DashboardPage() {
               <div>
                 <p className="text-sm text-muted-foreground">Scripts Stored</p>
                 <p className="text-2xl font-bold text-foreground">
-                  0 <span className="text-muted-foreground text-sm font-normal">/ {limit === 0 ? '0' : limit}</span>
+                  {stats.scripts}{' '}
+                  <span className="text-muted-foreground text-sm font-normal">/ {limitLabel}</span>
                 </p>
               </div>
             </div>
-            {limit > 0 && (
+            {stats.unlimited ? (
+              <p className="text-xs text-emerald-400 mt-2">Unlimited uploads</p>
+            ) : stats.scriptLimit ? (
               <div className="mt-2 h-2 bg-secondary rounded-full overflow-hidden">
-                <div className="h-full bg-red-500 rounded-full" style={{ width: '0%' }} />
+                <div className="h-full bg-red-500 rounded-full" style={{ width: `${pct}%` }} />
               </div>
-            )}
-            {limit === 0 && (
-              <p className="text-xs text-red-400 mt-2">Upgrade to store scripts</p>
-            )}
+            ) : null}
           </CardContent>
         </Card>
 
@@ -61,7 +84,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Active Keys</p>
-                <p className="text-2xl font-bold text-foreground">0</p>
+                <p className="text-2xl font-bold text-foreground">{stats.activeKeys}</p>
               </div>
             </div>
           </CardContent>

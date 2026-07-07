@@ -38,6 +38,10 @@ export const changeEmailSchema = z.object({
   newEmail: z.string().email('Invalid email address'),
 });
 
+export const profileSchema = z.object({
+  displayName: z.string().max(40, 'Display name must be at most 40 characters').optional(),
+});
+
 export const scriptUploadSchema = z.object({
   name: z.string().min(1, 'Script name is required').max(100, 'Script name must be at most 100 characters'),
   description: z.string().max(500, 'Description must be at most 500 characters').optional(),

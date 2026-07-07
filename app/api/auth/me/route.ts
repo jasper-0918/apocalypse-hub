@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   // refresh without forcing a re-login (the token payload can be stale).
   const { data: row } = await supabase
     .from('users')
-    .select('role, plan, username, key_expiry_hours')
+    .select('role, plan, username, key_expiry_hours, display_name, avatar_url')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -23,6 +23,8 @@ export async function GET(req: NextRequest) {
       plan: row?.plan ?? user.plan,
       username: row?.username ?? user.username,
       key_expiry_hours: row?.key_expiry_hours ?? 12,
+      display_name: (row as any)?.display_name ?? null,
+      avatar_url: (row as any)?.avatar_url ?? null,
     },
   });
 }

@@ -1,21 +1,85 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
+import { getToken } from '@/lib/session';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, KeyRound, Mail } from 'lucide-react';
+import { Loader2, KeyRound, Mail, UserCircle, Camera } from 'lucide-react';
 import { PasswordStrength } from '@/components/password-strength';
 import { isPasswordValid } from '@/lib/password';
 
 type Msg = { text: string; kind: 'ok' | 'err' } | null;
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, refresh } = useAuth();
   const router = useRouter();
+
+  // Profile (display name + avatar)
+  const [displayName, setDisplayName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [profileMsg, setProfileMsg] = useState<Msg>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (user) {
+      setDisplayName(user.display_name || '');
+      setAvatarUrl(user.avatar_url || null);
+    }
+  }, [user]);
+
+  const saveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileMsg(null);
+    setProfileLoading(true);
+    try {
+      const res = await fetch('/api/auth/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+        body: JSON.stringify({ displayName }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        await refresh();
+        setProfileMsg({ text: 'Profile updated.', kind: 'ok' });
+      } else {
+        setProfileMsg({ text: data.error || 'Could not update profile.', kind: 'err' });
+      }
+    } catch {
+      setProfileMsg({ text: 'Could not update profile.', kind: 'err' });
+    }
+    setProfileLoading(false);
+  };
+
+  const uploadAvatar = async (file: File) => {
+    setProfileMsg(null);
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/auth/avatar', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getToken()}` },
+        body: form,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.url) {
+        setAvatarUrl(data.url);
+        await refresh();
+        setProfileMsg({ text: 'Profile picture updated.', kind: 'ok' });
+      } else {
+        setProfileMsg({ text: data.error || 'Could not upload picture.', kind: 'err' });
+      }
+    } catch {
+      setProfileMsg({ text: 'Could not upload picture.', kind: 'err' });
+    }
+    setUploading(false);
+  };
 
   // Change password
   const [curPw, setCurPw] = useState('');
@@ -103,6 +167,88 @@ export default function SettingsPage() {
       <p className="text-muted-foreground mb-8">
         Signed in as <span className="text-foreground">{user?.email}</span>
       </p>
+
+      <Card className="bg-card border-border mb-8">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <UserCircle className="h-5 w-5 text-red-400" />
+            <CardTitle className="text-foreground">Profile</CardTitle>
+          </div>
+          <CardDescription className="text-muted-foreground">
+            Your public display name and picture. Your username stays the same.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4 mb-6">
+            <div className="relative h-20 w-20 shrink-0">
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarUrl} alt="Avatar" className="h-20 w-20 rounded-full object-cover border border-border" />
+              ) : (
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-secondary border border-border text-2xl font-bold text-muted-foreground">
+                  {(user?.display_name || user?.username || '?').charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) uploadAvatar(f);
+                  e.target.value = '';
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={uploading}
+                onClick={() => fileRef.current?.click()}
+                className="border-border text-foreground hover:bg-secondary"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading…
+                  </>
+                ) : (
+                  <>
+                    <Camera className="h-4 w-4 mr-2" /> Change picture
+                  </>
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground mt-1.5">PNG, JPG, WebP or GIF, up to 2 MB.</p>
+            </div>
+          </div>
+
+          <form onSubmit={saveProfile} className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Username</Label>
+              <Input value={user?.username || ''} disabled className="bg-secondary border-border opacity-70" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Display name</Label>
+              <Input
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                maxLength={40}
+                placeholder={user?.username || 'Your display name'}
+                className="bg-secondary border-border"
+              />
+            </div>
+            {profileMsg && <p className={`text-sm ${noticeClass(profileMsg.kind)}`}>{profileMsg.text}</p>}
+            <Button
+              type="submit"
+              disabled={profileLoading}
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold"
+            >
+              {profileLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save profile'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       <Card className="bg-card border-border mb-8">
         <CardHeader>

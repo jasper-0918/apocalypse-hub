@@ -10,6 +10,8 @@ interface User {
   username: string;
   role: string;
   plan: string;
+  display_name?: string | null;
+  avatar_url?: string | null;
 }
 
 interface AuthContextType {
@@ -19,6 +21,7 @@ interface AuthContextType {
   register: (email: string, username: string, password: string) => Promise<void>;
   logout: () => void;
   logoutAll: () => Promise<void>;
+  refresh: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -87,6 +90,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/dashboard');
   };
 
+  // Re-pull the current user (e.g. after a profile/avatar change) so the header,
+  // sidebar and anything reading useAuth reflect it immediately.
+  const refresh = async () => {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.user) setUser(data.user);
+      }
+    } catch {
+      /* keep the current user on a transient failure */
+    }
+  };
+
   const logout = () => {
     clearSession();
     setUser(null);
@@ -109,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, logoutAll }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, logoutAll, refresh }}>
       {children}
     </AuthContext.Provider>
   );

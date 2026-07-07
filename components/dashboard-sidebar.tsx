@@ -108,9 +108,19 @@ export function DashboardSidebar() {
       </nav>
 
       <div className="p-4 border-t border-border">
-        <div className="px-3 py-2 mb-3">
-          <p className="text-sm font-medium text-foreground">{user?.username}</p>
-          <p className="text-xs text-muted-foreground">{user?.plan} Plan</p>
+        <div className="flex items-center gap-3 px-3 py-2 mb-3">
+          {user?.avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover border border-border shrink-0" />
+          ) : (
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary border border-border text-sm font-bold text-muted-foreground shrink-0">
+              {(user?.display_name || user?.username || '?').charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-foreground truncate">{user?.display_name || user?.username}</p>
+            <p className="text-xs text-muted-foreground">{user?.plan} Plan</p>
+          </div>
         </div>
         <button
           onClick={logout}

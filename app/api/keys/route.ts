@@ -6,6 +6,10 @@ import { generateKeyValue, getKeyExpiry } from '@/lib/keygen';
 import { deleteExpiredKeys } from '@/lib/keys';
 import { earningsForCompletion, UNIQUE_COMPLETION_WINDOW_HOURS } from '@/lib/earnings';
 import { isGateEnforced } from '@/lib/keyproviders';
+import { hasUnlimitedPerks } from '@/lib/plans';
+
+// Owner/admin keys effectively never expire (~100 years).
+const INFINITE_KEY_HOURS = 24 * 365 * 100;
 
 // POST: Claim a key (works for both authenticated and anonymous users)
 export async function POST(req: NextRequest) {
@@ -82,9 +86,13 @@ export async function POST(req: NextRequest) {
     provider = unlock.provider || provider;
   }
 
-  // Resolve key expiry hours: Scripter/Developer can configure their own
+  // Resolve key expiry hours. Owner/admin keys never expire; Scripter can
+  // configure their own duration; everyone else gets the default.
+  const isStaff = !!authUser && hasUnlimitedPerks(authUser.role);
   let expiryHours = 12;
-  if (userId && userPlan === 'SCRIPTER') {
+  if (isStaff) {
+    expiryHours = INFINITE_KEY_HOURS;
+  } else if (userId && userPlan === 'SCRIPTER') {
     const { data: userRow } = await supabase
       .from('users')
       .select('key_expiry_hours')
@@ -243,7 +251,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     key: activatedKey?.value,
     expiresAt: activatedKey?.expires_at,
-    message: `Key claimed! Valid for ${expiryHours} hours.`,
+    message: isStaff ? 'Key claimed! It never expires.' : `Key claimed! Valid for ${expiryHours} hours.`,
   });
 }
 
