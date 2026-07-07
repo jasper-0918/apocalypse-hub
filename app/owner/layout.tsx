@@ -1,6 +1,6 @@
 'use client';
 
-import { AuthProvider, useAuth } from '@/components/auth-provider';
+import { useAuth } from '@/components/auth-provider';
 import { OwnerSidebar } from '@/components/owner-sidebar';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -34,9 +34,5 @@ function OwnerGuard({ children }: { children: React.ReactNode }) {
 }
 
 export default function OwnerLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <AuthProvider>
-      <OwnerGuard>{children}</OwnerGuard>
-    </AuthProvider>
-  );
+  return <OwnerGuard>{children}</OwnerGuard>;
 }

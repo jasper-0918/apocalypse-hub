@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { getToken, storeSession, clearSession, pruneEphemeralSessionOnce } from '@/lib/session';
 
 interface User {
   id: string;
@@ -14,7 +15,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, remember?: boolean) => Promise<void>;
   register: (email: string, username: string, password: string) => Promise<void>;
   logout: () => void;
   logoutAll: () => Promise<void>;
@@ -23,12 +24,15 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  // Drop an expired "don't remember me" session before we read the token.
+  pruneEphemeralSessionOnce();
+
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem('ah_session');
+    const token = getToken();
     if (token) {
       fetch('/api/auth/me', {
         headers: { Authorization: `Bearer ${token}` },
@@ -36,20 +40,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .then((res) => res.ok ? res.json() : null)
         .then((data) => {
           if (data?.user) setUser(data.user);
-          else localStorage.removeItem('ah_session');
+          else clearSession();
         })
-        .catch(() => localStorage.removeItem('ah_session'))
+        .catch(() => clearSession())
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, remember = true) => {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, remember }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -59,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       throw new Error(data.error || 'Login failed');
     }
-    localStorage.setItem('ah_session', data.token);
+    storeSession(data.token, remember);
     setUser(data.user);
     if (data.user?.role === 'OWNER') router.push('/owner');
     else if (data.user?.role === 'ADMIN') router.push('/admin');
@@ -78,19 +82,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.push(`/verify?email=${encodeURIComponent(data.email)}`);
       return;
     }
-    localStorage.setItem('ah_session', data.token);
+    storeSession(data.token, true);
     setUser(data.user);
     router.push('/dashboard');
   };
 
   const logout = () => {
-    localStorage.removeItem('ah_session');
+    clearSession();
     setUser(null);
     router.push('/');
   };
 
   const logoutAll = async () => {
-    const token = localStorage.getItem('ah_session');
+    const token = getToken();
     try {
       await fetch('/api/auth/logout-all', {
         method: 'POST',
@@ -99,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // Best-effort; we clear locally regardless.
     }
-    localStorage.removeItem('ah_session');
+    clearSession();
     setUser(null);
     router.push('/login');
   };

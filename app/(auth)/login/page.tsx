@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,39 +10,23 @@ import { Label } from '@/components/ui/label';
 import { Flame, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        // Unverified account: route to the code-entry page instead of a dead end.
-        if (data.needsVerification) {
-          router.push(`/verify?email=${encodeURIComponent(data.email || email)}`);
-          return;
-        }
-        setError(data.error || 'Login failed');
-        return;
-      }
-      localStorage.setItem('ah_session', data.token);
-      if (data.user?.role === 'OWNER') router.push('/owner');
-      else if (data.user?.role === 'ADMIN') router.push('/admin');
-      else router.push('/dashboard');
-    } catch {
-      setError('An error occurred. Please try again.');
+      // login() handles the session, global auth state, and role-based redirect
+      // (and routes unverified accounts to /verify).
+      await login(email, password, remember);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -91,7 +75,16 @@ export default function LoginPage() {
                 />
               </div>
 
-              <div className="text-right -mt-1">
+              <div className="flex items-center justify-between -mt-1">
+                <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={remember}
+                    onChange={(e) => setRemember(e.target.checked)}
+                    className="h-4 w-4 rounded border-border bg-secondary accent-red-600"
+                  />
+                  Remember me
+                </label>
                 <Link href="/forgot-password" className="text-sm text-red-400 hover:text-red-300">
                   Forgot password?
                 </Link>

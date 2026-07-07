@@ -1,6 +1,6 @@
 'use client';
 
-import { AuthProvider, useAuth } from '@/components/auth-provider';
+import { useAuth } from '@/components/auth-provider';
 import { DashboardSidebar } from '@/components/dashboard-sidebar';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -41,9 +41,5 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <AuthProvider>
-      <DashboardGuard>{children}</DashboardGuard>
-    </AuthProvider>
-  );
+  return <DashboardGuard>{children}</DashboardGuard>;
 }

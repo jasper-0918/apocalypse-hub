@@ -34,6 +34,7 @@ export default function HomePage() {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<'recent' | 'trending'>('recent');
   const [games, setGames] = useState<GameLink[]>([]);
+  const [showAllGames, setShowAllGames] = useState(false);
 
   useEffect(() => {
     const fetchScripts = async () => {
@@ -56,7 +57,8 @@ export default function HomePage() {
     fetch('/api/scripts/games')
       .then((r) => (r.ok ? r.json() : []))
       .then((data: GameLink[]) => {
-        if (Array.isArray(data) && data.length) setGames(data.slice(0, 24));
+        // API returns games sorted by script count (desc); keep the top 10.
+        if (Array.isArray(data) && data.length) setGames(data.slice(0, 10));
       })
       .catch(() => {});
   }, []);
@@ -138,8 +140,8 @@ export default function HomePage() {
         {games.length > 0 && (
           <div className="mb-6">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">Browse by game</p>
-            <div className="flex gap-2 flex-wrap">
-              {games.map((game) => (
+            <div className="flex gap-2 flex-wrap items-center">
+              {(showAllGames ? games : games.slice(0, 5)).map((game) => (
                 <Link
                   key={game.slug}
                   href={`/game/${game.slug}`}
@@ -149,6 +151,14 @@ export default function HomePage() {
                   <span className="text-xs text-muted-foreground/70">{game.count}</span>
                 </Link>
               ))}
+              {games.length > 5 && (
+                <button
+                  onClick={() => setShowAllGames((v) => !v)}
+                  className="inline-flex items-center rounded-md border border-border px-3 py-1.5 text-sm font-medium text-red-400 transition-colors hover:border-red-900/40 hover:text-red-300"
+                >
+                  {showAllGames ? 'Show less' : `Show more (${games.length - 5})`}
+                </button>
+              )}
             </div>
           </div>
         )}

@@ -76,11 +76,14 @@ export async function POST(req: NextRequest) {
       user: { id: user.id, email: user.email, username: user.username, role: user.role, plan: user.plan },
     });
 
+    // "Remember me" (default on): a persistent 7-day cookie. When off, a session
+    // cookie that the browser drops when it closes.
+    const remember = body.remember !== false;
     response.cookies.set('ah_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
+      ...(remember ? { maxAge: 60 * 60 * 24 * 7 } : {}),
       path: '/',
     });
 

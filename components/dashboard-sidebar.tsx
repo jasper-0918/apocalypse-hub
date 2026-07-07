@@ -16,6 +16,7 @@ import {
   Wallet,
   Power,
   Settings,
+  Home,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -53,6 +54,13 @@ export function DashboardSidebar() {
       </div>
 
       <nav className="flex-1 p-4 space-y-1">
+        <Link
+          href="/"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sky-400 hover:bg-sky-500/10 transition-colors"
+        >
+          <Home className="h-4 w-4" />
+          Browse Scripts
+        </Link>
         {links.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}

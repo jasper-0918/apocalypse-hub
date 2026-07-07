@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,39 +12,23 @@ import { PasswordStrength } from '@/components/password-strength';
 import { isPasswordValid } from '@/lib/password';
 
 export default function RegisterPage() {
+  const { register } = useAuth();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, username, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || 'Registration failed');
-        return;
-      }
-      // Email verification required: no session is issued yet — send them to the
-      // code-entry page (which we also deep-link from the verification email).
-      if (data.needsVerification) {
-        router.push(`/verify?email=${encodeURIComponent(data.email || email)}`);
-        return;
-      }
-      localStorage.setItem('ah_session', data.token);
-      router.push('/dashboard');
-    } catch {
-      setError('An error occurred. Please try again.');
+      // register() handles the session, global auth state, and redirect (to
+      // /verify when email verification is required, else /dashboard).
+      await register(email, username, password);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
