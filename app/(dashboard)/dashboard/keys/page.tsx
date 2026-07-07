@@ -10,9 +10,8 @@ import {
   Copy, ExternalLink, Crown, Shield
 } from 'lucide-react';
 import { siteBaseUrl } from '@/lib/utils';
+import { PAID_PLANS } from '@/lib/plans';
 import Link from 'next/link';
-
-const PAID_PLANS = ['SCRIPTER'];
 
 function daysRemaining(expiresAt: string) {
   const diff = new Date(expiresAt).getTime() - Date.now();

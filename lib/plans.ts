@@ -8,6 +8,9 @@ export const SLOT_ADDON = {
   slotsPerPack: 50,
 };
 
+// Plans that get a renewable 30-day key and skip the free key system.
+export const PAID_PLANS = ['SCRIPTER'];
+
 // Base script limits per plan (before purchased +50 packs).
 export const PLAN_BASE_LIMITS: Record<string, number> = {
   FREE: 10,

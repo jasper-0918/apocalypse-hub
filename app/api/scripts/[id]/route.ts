@@ -128,7 +128,7 @@ export async function GET(
   const supabase = createServerClient();
   const { data: script } = await supabase
     .from('scripts')
-    .select('id, name, description, is_protected, is_published, game, category, created_at, updated_at, owner_id')
+    .select('id, name, description, is_protected, is_published, game, created_at, updated_at, owner_id')
     .eq('id', params.id)
     .single();
 

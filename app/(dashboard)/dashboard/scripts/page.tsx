@@ -6,8 +6,7 @@ import { ScriptCard } from '@/components/script-card';
 import { Button } from '@/components/ui/button';
 import { Plus, FileCode2, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-
-const PAID_PLANS = ['SCRIPTER'];
+import { PAID_PLANS } from '@/lib/plans';
 
 export default function ScriptsPage() {
   const { user } = useAuth();
@@ -59,6 +58,25 @@ export default function ScriptsPage() {
       });
       if (res.ok) {
         setScripts((prev) => prev.filter((s) => s.id !== id));
+      }
+    } catch {
+      // Silently fail
+    }
+  };
+
+  const handleUpdateGames = async (id: string, games: string[]) => {
+    const token = localStorage.getItem('ah_session');
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/scripts/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ games }),
+      });
+      if (res.ok) {
+        setScripts((prev) =>
+          prev.map((s) => (s.id === id ? { ...s, games, game: games[0] || s.game } : s))
+        );
       }
     } catch {
       // Silently fail
@@ -130,6 +148,7 @@ export default function ScriptsPage() {
               script={script}
               onDelete={handleDelete}
               onTogglePublish={handleTogglePublish}
+              onUpdateGames={handleUpdateGames}
               baseUrl={typeof window !== 'undefined' ? window.location.origin : ''}
               keyParam={keyParam}
             />

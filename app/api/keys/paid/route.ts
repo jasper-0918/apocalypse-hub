@@ -3,8 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
 import { generateKeyValue } from '@/lib/keygen';
-
-const PAID_PLANS = ['SCRIPTER'];
+import { PAID_PLANS } from '@/lib/plans';
 
 function thirtyDaysFromNow() {
   const d = new Date();

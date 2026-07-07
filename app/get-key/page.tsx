@@ -6,9 +6,8 @@ import { KeySystemGate } from '@/components/key-system-gate';
 import { Flame, ArrowLeft, Info } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { siteBaseUrl } from '@/lib/utils';
+import { PAID_PLANS } from '@/lib/plans';
 import Link from 'next/link';
-
-const PAID_PLANS = ['SCRIPTER'];
 
 export default function GetKeyPage() {
   const router = useRouter();

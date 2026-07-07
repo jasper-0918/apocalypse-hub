@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { isKeyValid } from '@/lib/keygen';
 import { obfuscateLua } from '@/lib/obfuscator';
+import { PAID_PLANS } from '@/lib/plans';
 
 // This endpoint is called by Roblox via:
 // loadstring(game:HttpGet("https://apocalypsehub.com/api/scripts/serve/SCRIPT_ID?key=APOC-XXXX-XXXX-XXXX-XXXX"))()
@@ -50,7 +51,6 @@ export async function GET(
       );
     }
     // Verify the account still has an active paid plan
-    const PAID_PLANS = ['SCRIPTER'];
     const { data: keyOwner } = await supabase
       .from('users')
       .select('plan, role')

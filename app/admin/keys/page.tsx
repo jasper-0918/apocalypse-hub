@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Key, CheckCircle, XCircle, Clock, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Loader2, Key, CheckCircle, XCircle, Clock, Trash2, Search } from 'lucide-react';
 
 export default function AdminKeysPage() {
   const [keys, setKeys] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     const fetchKeys = async () => {
@@ -53,13 +55,27 @@ export default function AdminKeysPage() {
     return { label: 'Available', color: 'bg-amber-600/20 text-amber-400', icon: Clock };
   };
 
+  const filtered = keys.filter((k) =>
+    `${k.value} ${k.assigned_username || ''}`.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="p-8 max-w-6xl">
       <h1 className="text-3xl font-bold text-foreground mb-2">Key Management</h1>
-      <p className="mb-8 text-sm text-muted-foreground">
+      <p className="mb-6 text-sm text-muted-foreground">
         Keys are generated automatically when a user completes the key system, and expired keys are
         removed automatically — nothing to generate or clean up here.
       </p>
+
+      <div className="relative max-w-md mb-6">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by key or username…"
+          className="pl-9 bg-secondary border-border"
+        />
+      </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
@@ -67,7 +83,7 @@ export default function AdminKeysPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {keys.map((key) => {
+          {filtered.map((key) => {
             const status = getKeyStatus(key);
             const StatusIcon = status.icon;
             return (
@@ -106,10 +122,12 @@ export default function AdminKeysPage() {
             );
           })}
 
-          {keys.length === 0 && (
+          {filtered.length === 0 && (
             <Card className="bg-card border-border">
               <CardContent className="flex items-center justify-center py-16">
-                <p className="text-muted-foreground">No active keys right now</p>
+                <p className="text-muted-foreground">
+                  {search ? 'No keys match your search.' : 'No active keys right now'}
+                </p>
               </CardContent>
             </Card>
           )}
