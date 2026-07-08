@@ -2,7 +2,7 @@
 // (no trailing slash) — used by metadata, sitemap, robots and JSON-LD.
 // Set NEXT_PUBLIC_BASE_URL in Vercel to your real domain when you have one.
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_BASE_URL || 'https://apocalypse-hub.vercel.app'
+  process.env.NEXT_PUBLIC_BASE_URL || 'https://apocalypsebloxhub.vercel.app'
 ).replace(/\/+$/, '');
 
 export const SITE_NAME = 'Apocalypse Blox Hub';

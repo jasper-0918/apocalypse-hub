@@ -49,7 +49,7 @@ export function GET(req: Request) {
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div style={{ width: '120px', height: '8px', borderRadius: '999px', background: '#ef4444' }} />
           <div style={{ color: '#a1a1aa', fontSize: '24px', marginLeft: '20px' }}>
-            apocalypse-hub.vercel.app
+            apocalypsebloxhub.vercel.app
           </div>
         </div>
       </div>

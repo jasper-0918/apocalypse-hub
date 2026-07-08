@@ -79,7 +79,7 @@ export default function AdminAnalyticsPage() {
                 </p>
               </div>
               <a
-                href="https://vercel.com/jasperpaitan0918-5212s-projects/apocalypse-hub/analytics"
+                href="https://vercel.com/jasperpaitan0918-5212s-projects/apocalypsebloxhub/analytics"
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 shrink-0"

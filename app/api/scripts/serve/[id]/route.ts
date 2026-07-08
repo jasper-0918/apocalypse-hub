@@ -6,7 +6,7 @@ import { obfuscateLua } from '@/lib/obfuscator';
 import { PAID_PLANS } from '@/lib/plans';
 
 // This endpoint is called by Roblox via:
-// loadstring(game:HttpGet("https://apocalypsehub.com/api/scripts/serve/SCRIPT_ID?key=APOC-XXXX-XXXX-XXXX-XXXX"))()
+// loadstring(game:HttpGet("https://apocalypsebloxhub.vercel.app/api/scripts/serve/SCRIPT_ID?key=APOC-XXXX-XXXX-XXXX-XXXX"))()
 //
 // It validates the key server-side, then returns the obfuscated Lua script.
 // If the key is invalid/expired, it returns a Lua error that the executor will display.
@@ -20,7 +20,7 @@ export async function GET(
 
   if (!keyValue) {
     return new NextResponse(
-      `-- [Apocalypse Blox Hub] ACCESS DENIED\n-- No key provided. Get your key at apocalypsehub.com/get-key\nerror("APOCALYPSE_HUB: Key required. Visit apocalypsehub.com/get-key to claim your free key.")`,
+      `-- [Apocalypse Blox Hub] ACCESS DENIED\n-- No key provided. Get your key at apocalypsebloxhub.vercel.app/get-key\nerror("APOCALYPSE_HUB: Key required. Visit apocalypsebloxhub.vercel.app/get-key to claim your free key.")`,
       { status: 403, headers: { 'Content-Type': 'text/plain' } }
     );
   }
@@ -37,7 +37,7 @@ export async function GET(
   if (!key || !isKeyValid(key)) {
     const reason = !key ? 'not found' : (new Date() > new Date(key.expires_at) ? 'expired' : 'inactive');
     return new NextResponse(
-      `-- [Apocalypse Blox Hub] ACCESS DENIED\n-- Key ${reason}.\n-- Get a new key at apocalypsehub.com/get-key\nerror("APOCALYPSE_HUB: Key ${reason}. Visit apocalypsehub.com/get-key")`,
+      `-- [Apocalypse Blox Hub] ACCESS DENIED\n-- Key ${reason}.\n-- Get a new key at apocalypsebloxhub.vercel.app/get-key\nerror("APOCALYPSE_HUB: Key ${reason}. Visit apocalypsebloxhub.vercel.app/get-key")`,
       { status: 403, headers: { 'Content-Type': 'text/plain' } }
     );
   }
@@ -58,7 +58,7 @@ export async function GET(
       .maybeSingle();
     if (!keyOwner || (!PAID_PLANS.includes(keyOwner.plan) && keyOwner.role !== 'OWNER')) {
       return new NextResponse(
-        `-- [Apocalypse Blox Hub] ACCESS DENIED\n-- The account associated with this key no longer has an active plan.\nerror("APOCALYPSE_HUB: Plan inactive. Renew your subscription at apocalypsehub.com")`,
+        `-- [Apocalypse Blox Hub] ACCESS DENIED\n-- The account associated with this key no longer has an active plan.\nerror("APOCALYPSE_HUB: Plan inactive. Renew your subscription at apocalypsebloxhub.vercel.app")`,
         { status: 403, headers: { 'Content-Type': 'text/plain' } }
       );
     }
