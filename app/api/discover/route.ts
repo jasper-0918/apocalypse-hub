@@ -17,7 +17,8 @@ export async function GET(req: NextRequest) {
   let q = supabase
     .from('scripts')
     .select(
-      'id, name, slug, game, games, thumbnail_url, view_count, is_protected, created_at, owner_id, users!scripts_owner_id_fkey(username)'
+      'id, name, slug, game, games, thumbnail_url, view_count, is_protected, created_at, owner_id, users!scripts_owner_id_fkey(username)',
+      { count: 'exact' }
     )
     .eq('is_published', true)
     .eq('external_source', IMPORT_SOURCE);
@@ -29,10 +30,10 @@ export async function GET(req: NextRequest) {
       ? q.order('created_at', { ascending: false })
       : q.order('view_count', { ascending: false });
 
-  const { data, error } = await q.range(from, from + limit - 1);
+  const { data, error, count } = await q.range(from, from + limit - 1);
   if (error) {
     // Column/table missing (migration not applied) — degrade to empty, not 500.
-    return NextResponse.json({ scripts: [] });
+    return NextResponse.json({ scripts: [], total: 0 });
   }
 
   const scripts = (data || []).map((s: any) => ({
@@ -48,5 +49,5 @@ export async function GET(req: NextRequest) {
     owner_username: s.users?.username || undefined,
   }));
 
-  return NextResponse.json({ scripts });
+  return NextResponse.json({ scripts, total: count ?? scripts.length });
 }

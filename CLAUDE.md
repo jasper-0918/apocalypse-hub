@@ -144,13 +144,16 @@ scripts/                 one-off node tooling (sync-scriptblox.mjs bulk importer
 ### 4.9 Admin / Owner panels & list UX
 - `app/admin/*` (staff), `app/owner/*` (owner).
 - **Long lists** (My Scripts, admin Users/Keys/Scripts, Earnings traffic) use
-  `hooks/use-list-search.ts` (client-side search + **pagination**: one page at a
-  time, resets to page 1 on search) rendered with `components/list-pager.tsx`
-  (Prev · Page N/M · Next, "Showing X–Y of Z"). Pattern: `const list =
-  useListSearch(items, matcher, { pageSize }); … {list.shown.map(...)}
-  <ListPager {...list} noun="…" />`.
-- `/discover` paginates **server-side** (the API's `page`/`limit` params) with its
-  own Prev/Next, since the imported catalog is too big to load fully client-side.
+  `hooks/use-list-search.ts` (client-side search + **pagination**) rendered with
+  `components/list-pager.tsx`. The pager has: Prev/Next, a **jump-to-page** input,
+  a **per-page size selector** ("N / page"), and "Showing X–Y of Z". The hook
+  **syncs `q`/`page`/`size` to the URL** via the History API (shareable links +
+  back/forward; `popstate`-aware). Pattern: `const list = useListSearch(items,
+  matcher, { pageSize }); … {list.shown.map(...)} <ListPager {...list} noun="…" />`.
+  Options: `{ syncUrl: false }` (e.g. the Earnings in-card widget), and
+  `<ListPager compact />` (hide selector + jump for tight spaces).
+- `/discover` paginates **server-side** (the API returns `total`; the page owns
+  `sort`/`q`/`page`/`size` URL state) and reuses `<ListPager>` for the footer.
 
 ---
 

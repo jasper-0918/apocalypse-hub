@@ -84,7 +84,7 @@ export default function EarningsPage() {
   const traffic = useListSearch(
     trafficSorted,
     (s, query) => (s.name || '').toLowerCase().includes(query),
-    { pageSize: 8 }
+    { pageSize: 8, syncUrl: false } // in-card widget — don't rewrite the page URL
   );
 
   const submit = async () => {
@@ -274,7 +274,7 @@ export default function EarningsPage() {
                     <p className="text-sm text-muted-foreground py-2">No scripts match “{traffic.search}”.</p>
                   )}
                 </div>
-                <ListPager {...traffic} noun="scripts" scrollTop={false} />
+                <ListPager {...traffic} noun="scripts" scrollTop={false} compact />
               </>
             )}
           </CardContent>

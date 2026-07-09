@@ -1,60 +1,106 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SiteHeader } from '@/components/site-header';
 import { ScriptHubCard, HubScript } from '@/components/script-hub-card';
-import { Compass, Search, Loader2, TrendingUp, Clock, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ListPager } from '@/components/list-pager';
+import { Compass, Search, Loader2, TrendingUp, Clock, Eye } from 'lucide-react';
 
-const PAGE_SIZE = 48;
+const DEFAULT_SIZE = 48;
 
 export default function DiscoverPage() {
   const [scripts, setScripts] = useState<HubScript[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [debounced, setDebounced] = useState('');
   const [sort, setSort] = useState<'popular' | 'latest'>('popular');
   const [page, setPage] = useState(0); // 0-based
-  const [hasMore, setHasMore] = useState(false);
+  const [pageSize, setPageSize] = useState(DEFAULT_SIZE);
+  const timer = useRef<ReturnType<typeof setTimeout>>();
 
-  // Debounce the search box; resetting to page 1 on a new query.
+  // --- URL sync (shareable links + back/forward) ---
+  const writeUrl = (
+    patch: { sort?: string; q?: string; page?: number; size?: number },
+    mode: 'push' | 'replace'
+  ) => {
+    if (typeof window === 'undefined') return;
+    const usp = new URLSearchParams(window.location.search);
+    if ('sort' in patch) patch.sort === 'latest' ? usp.set('sort', 'latest') : usp.delete('sort');
+    if ('q' in patch) patch.q ? usp.set('q', patch.q) : usp.delete('q');
+    if ('page' in patch) (patch.page ?? 0) > 0 ? usp.set('page', String((patch.page ?? 0) + 1)) : usp.delete('page');
+    if ('size' in patch) patch.size && patch.size !== DEFAULT_SIZE ? usp.set('size', String(patch.size)) : usp.delete('size');
+    const qs = usp.toString();
+    window.history[mode === 'push' ? 'pushState' : 'replaceState'](
+      null,
+      '',
+      window.location.pathname + (qs ? `?${qs}` : '')
+    );
+  };
+
   useEffect(() => {
-    const t = setTimeout(() => {
-      setDebounced(search.trim());
-      setPage(0);
-    }, 350);
-    return () => clearTimeout(t);
-  }, [search]);
+    const read = () => {
+      const usp = new URLSearchParams(window.location.search);
+      const s = usp.get('sort') === 'latest' ? 'latest' : 'popular';
+      const query = usp.get('q') || '';
+      const sz = Number(usp.get('size'));
+      setSort(s);
+      setSearch(query);
+      setDebounced(query);
+      setPage(Math.max(0, (Number(usp.get('page')) || 1) - 1));
+      setPageSize(sz > 0 ? sz : DEFAULT_SIZE);
+    };
+    read();
+    window.addEventListener('popstate', read);
+    return () => window.removeEventListener('popstate', read);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
-    const params = new URLSearchParams({ sort, limit: String(PAGE_SIZE), page: String(page + 1) });
+    const params = new URLSearchParams({ sort, limit: String(pageSize), page: String(page + 1) });
     if (debounced) params.set('search', debounced);
     fetch(`/api/discover?${params}`)
-      .then((r) => (r.ok ? r.json() : { scripts: [] }))
+      .then((r) => (r.ok ? r.json() : { scripts: [], total: 0 }))
       .then((data) => {
-        const list: HubScript[] = data.scripts || [];
-        setScripts(list);
-        setHasMore(list.length === PAGE_SIZE); // a full page implies there may be more
+        setScripts(data.scripts || []);
+        setTotal(Number(data.total) || 0);
       })
       .catch(() => {
         setScripts([]);
-        setHasMore(false);
+        setTotal(0);
       })
       .finally(() => setLoading(false));
-  }, [sort, debounced, page]);
+  }, [sort, debounced, page, pageSize]);
 
-  const changePage = (p: number) => {
-    setPage(Math.max(0, p));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const onSearchChange = (v: string) => {
+    setSearch(v);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      setDebounced(v.trim());
+      setPage(0);
+      writeUrl({ q: v.trim(), page: 0 }, 'replace');
+    }, 350);
   };
-
   const pickSort = (s: 'popular' | 'latest') => {
     setSort(s);
     setPage(0);
+    writeUrl({ sort: s, page: 0 }, 'replace');
   };
+  const goPage = (p: number) => {
+    setPage(Math.max(0, p));
+    writeUrl({ page: Math.max(0, p) }, 'push');
+  };
+  const changeSize = (s: number) => {
+    const np = Math.floor((page * pageSize) / s);
+    setPageSize(s);
+    setPage(np);
+    writeUrl({ size: s, page: np }, 'replace');
+  };
+
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <div className="min-h-screen bg-background">
@@ -75,7 +121,7 @@ export default function DiscoverPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => onSearchChange(e.target.value)}
               placeholder='Search scripts or games — e.g. "Blox Fruits"'
               className="pl-12 h-12 bg-card border-border"
             />
@@ -110,21 +156,12 @@ export default function DiscoverPage() {
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary mb-4">
                 <Eye className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">
-                {page > 0 ? 'No more scripts' : 'Nothing here yet'}
-              </h2>
+              <h2 className="text-xl font-semibold text-foreground mb-2">Nothing here yet</h2>
               <p className="text-muted-foreground max-w-md">
                 {debounced
                   ? 'No scripts match your search. Try a different game or keyword.'
-                  : page > 0
-                  ? 'You’ve reached the end.'
                   : 'The discovery catalog is still being imported. Check back shortly.'}
               </p>
-              {page > 0 && (
-                <Button variant="outline" size="sm" className="mt-4" onClick={() => changePage(page - 1)}>
-                  <ChevronLeft className="h-4 w-4 mr-1" /> Back
-                </Button>
-              )}
             </CardContent>
           </Card>
         ) : (
@@ -135,28 +172,18 @@ export default function DiscoverPage() {
               ))}
             </div>
 
-            {/* Pager */}
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 0}
-                onClick={() => changePage(page - 1)}
-                className="border-border text-muted-foreground hover:text-foreground disabled:opacity-40"
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" /> Prev
-              </Button>
-              <span className="text-sm text-muted-foreground whitespace-nowrap">Page {page + 1}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!hasMore}
-                onClick={() => changePage(page + 1)}
-                className="border-border text-muted-foreground hover:text-foreground disabled:opacity-40"
-              >
-                Next <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
+            <ListPager
+              page={page}
+              pageCount={pageCount}
+              setPage={goPage}
+              rangeStart={total ? page * pageSize + 1 : 0}
+              rangeEnd={Math.min(total, (page + 1) * pageSize)}
+              matchCount={total}
+              q={debounced}
+              noun="scripts"
+              pageSize={pageSize}
+              setPageSize={changeSize}
+            />
           </>
         )}
       </section>
