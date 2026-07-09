@@ -8,11 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, FileCode2, Shield, Search, Trash2, ExternalLink } from 'lucide-react';
 import { ScriptbloxSyncPanel } from '@/components/scriptblox-sync-panel';
+import { useListSearch } from '@/hooks/use-list-search';
 
 export default function AdminScriptsPage() {
   const [scripts, setScripts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -49,11 +49,13 @@ export default function AdminScriptsPage() {
     setBusyId(null);
   };
 
-  const filtered = scripts.filter(
-    (s) =>
-      s.name?.toLowerCase().includes(search.toLowerCase()) ||
-      s.owner_username?.toLowerCase().includes(search.toLowerCase()) ||
-      s.game?.toLowerCase().includes(search.toLowerCase())
+  const { search, setSearch, shown, total, matchCount, hiddenCount, q } = useListSearch(
+    scripts,
+    (s, query) =>
+      (s.name || '').toLowerCase().includes(query) ||
+      (s.owner_username || '').toLowerCase().includes(query) ||
+      (s.game || '').toLowerCase().includes(query),
+    { limit: 20, searchLimit: 100 }
   );
 
   return (
@@ -81,7 +83,7 @@ export default function AdminScriptsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((script) => (
+          {shown.map((script) => (
             <Card key={script.id} className="bg-card border-border transition-colors hover:border-red-900/40">
               <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-4 min-w-0">
@@ -132,7 +134,7 @@ export default function AdminScriptsPage() {
             </Card>
           ))}
 
-          {filtered.length === 0 && (
+          {shown.length === 0 && (
             <Card className="bg-card border-border">
               <CardContent className="flex items-center justify-center py-16">
                 <p className="text-muted-foreground">
@@ -140,6 +142,14 @@ export default function AdminScriptsPage() {
                 </p>
               </CardContent>
             </Card>
+          )}
+
+          {shown.length > 0 && (
+            <p className="pt-1 text-xs text-muted-foreground">
+              {q
+                ? `${matchCount} match${matchCount === 1 ? '' : 'es'}${hiddenCount ? ` (showing first ${shown.length})` : ''}`
+                : `Showing ${shown.length} of ${total}. Use search to find any script.`}
+            </p>
           )}
         </div>
       )}

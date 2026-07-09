@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import { ScriptCard } from '@/components/script-card';
 import { Button } from '@/components/ui/button';
-import { Plus, FileCode2, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Plus, FileCode2, Loader2, Search } from 'lucide-react';
 import Link from 'next/link';
 import { PAID_PLANS } from '@/lib/plans';
+import { useListSearch } from '@/hooks/use-list-search';
 
 export default function ScriptsPage() {
   const { user } = useAuth();
@@ -83,6 +85,15 @@ export default function ScriptsPage() {
     }
   };
 
+  const { search, setSearch, shown, total, matchCount, hiddenCount, q } = useListSearch(
+    scripts,
+    (s, query) =>
+      (s.name || '').toLowerCase().includes(query) ||
+      (s.game || '').toLowerCase().includes(query) ||
+      (Array.isArray(s.games) ? s.games.join(' ') : '').toLowerCase().includes(query),
+    { limit: 12, searchLimit: 60 }
+  );
+
   const handleTogglePublish = async (id: string, published: boolean) => {
     const token = localStorage.getItem('ah_session');
     if (!token) return;
@@ -141,19 +152,41 @@ export default function ScriptsPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {scripts.map((script) => (
-            <ScriptCard
-              key={script.id}
-              script={script}
-              onDelete={handleDelete}
-              onTogglePublish={handleTogglePublish}
-              onUpdateGames={handleUpdateGames}
-              baseUrl={typeof window !== 'undefined' ? window.location.origin : ''}
-              keyParam={keyParam}
+        <>
+          <div className="relative max-w-md mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search your scripts by name or game…"
+              className="pl-9 bg-secondary border-border"
             />
-          ))}
-        </div>
+          </div>
+
+          {shown.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">No scripts match “{search}”.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {shown.map((script) => (
+                <ScriptCard
+                  key={script.id}
+                  script={script}
+                  onDelete={handleDelete}
+                  onTogglePublish={handleTogglePublish}
+                  onUpdateGames={handleUpdateGames}
+                  baseUrl={typeof window !== 'undefined' ? window.location.origin : ''}
+                  keyParam={keyParam}
+                />
+              ))}
+            </div>
+          )}
+
+          <p className="mt-4 text-xs text-muted-foreground">
+            {q
+              ? `${matchCount} match${matchCount === 1 ? '' : 'es'}${hiddenCount ? ` (showing first ${shown.length})` : ''}`
+              : `Showing ${shown.length} of ${total}. Use search to find any of your scripts.`}
+          </p>
+        </>
       )}
     </div>
   );

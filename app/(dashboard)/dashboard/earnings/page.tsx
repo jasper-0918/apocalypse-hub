@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback, type ReactNode } from 'react';
+import { useEffect, useState, useCallback, useMemo, type ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, TrendingUp, Award, Loader2, Wallet, Coins } from 'lucide-react';
+import { DollarSign, TrendingUp, Award, Loader2, Wallet, Coins, Search } from 'lucide-react';
+import { useListSearch } from '@/hooks/use-list-search';
 
 // Fee constants — keep in sync with lib/earnings.ts
 const USD_FEE_PCT = 0.015;
@@ -72,6 +73,18 @@ export default function EarningsPage() {
       : +(amt * USD_FEE_PCT + USD_FEE_FIXED).toFixed(2);
   const net = Math.max(0, +(amt - fee).toFixed(2));
   const robux = currency === 'ROBUX' ? Math.floor(net * ROBUX_PER_USD) : null;
+
+  // Traffic list can get very long once many scripts are imported: show the most
+  // active few by default and let the owner search for a specific one.
+  const trafficSorted = useMemo(
+    () => [...(data?.scripts || [])].sort((a, b) => (b.completion_count || 0) - (a.completion_count || 0)),
+    [data]
+  );
+  const traffic = useListSearch(
+    trafficSorted,
+    (s, query) => (s.name || '').toLowerCase().includes(query),
+    { limit: 8, searchLimit: 50 }
+  );
 
   const submit = async () => {
     setSubmitting(true);
@@ -232,19 +245,40 @@ export default function EarningsPage() {
             {(!data || data.scripts.length === 0) ? (
               <p className="text-sm text-muted-foreground">Upload and publish scripts to start earning.</p>
             ) : (
-              <div className="space-y-2">
-                {data.scripts.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                    <div className="min-w-0">
-                      <p className="text-sm text-foreground truncate">{s.name}</p>
-                      {!s.is_published && <span className="text-xs text-muted-foreground">private</span>}
-                    </div>
-                    <Badge variant="secondary" className="bg-secondary text-muted-foreground shrink-0">
-                      {s.completion_count} completions
-                    </Badge>
+              <>
+                {data.scripts.length > 8 && (
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={traffic.search}
+                      onChange={(e) => traffic.setSearch(e.target.value)}
+                      placeholder="Search a script…"
+                      className="pl-9 h-9 bg-secondary border-border"
+                    />
                   </div>
-                ))}
-              </div>
+                )}
+                <div className="space-y-2">
+                  {traffic.shown.map((s) => (
+                    <div key={s.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div className="min-w-0">
+                        <p className="text-sm text-foreground truncate">{s.name}</p>
+                        {!s.is_published && <span className="text-xs text-muted-foreground">private</span>}
+                      </div>
+                      <Badge variant="secondary" className="bg-secondary text-muted-foreground shrink-0">
+                        {s.completion_count} completions
+                      </Badge>
+                    </div>
+                  ))}
+                  {traffic.shown.length === 0 && (
+                    <p className="text-sm text-muted-foreground py-2">No scripts match “{traffic.search}”.</p>
+                  )}
+                </div>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  {traffic.q
+                    ? `${traffic.matchCount} match${traffic.matchCount === 1 ? '' : 'es'}`
+                    : `Showing top ${traffic.shown.length} of ${traffic.total} by completions.`}
+                </p>
+              </>
             )}
           </CardContent>
         </Card>

@@ -6,12 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Key, CheckCircle, XCircle, Clock, Trash2, Search } from 'lucide-react';
+import { useListSearch } from '@/hooks/use-list-search';
 
 export default function AdminKeysPage() {
   const [keys, setKeys] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
 
   useEffect(() => {
     const fetchKeys = async () => {
@@ -55,8 +55,10 @@ export default function AdminKeysPage() {
     return { label: 'Available', color: 'bg-amber-600/20 text-amber-400', icon: Clock };
   };
 
-  const filtered = keys.filter((k) =>
-    `${k.value} ${k.assigned_username || ''}`.toLowerCase().includes(search.toLowerCase())
+  const { search, setSearch, shown, total, matchCount, hiddenCount, q } = useListSearch(
+    keys,
+    (k, query) => `${k.value} ${k.assigned_username || ''}`.toLowerCase().includes(query),
+    { limit: 25, searchLimit: 100 }
   );
 
   return (
@@ -83,7 +85,7 @@ export default function AdminKeysPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((key) => {
+          {shown.map((key) => {
             const status = getKeyStatus(key);
             const StatusIcon = status.icon;
             return (
@@ -122,7 +124,7 @@ export default function AdminKeysPage() {
             );
           })}
 
-          {filtered.length === 0 && (
+          {shown.length === 0 && (
             <Card className="bg-card border-border">
               <CardContent className="flex items-center justify-center py-16">
                 <p className="text-muted-foreground">
@@ -130,6 +132,14 @@ export default function AdminKeysPage() {
                 </p>
               </CardContent>
             </Card>
+          )}
+
+          {shown.length > 0 && (
+            <p className="pt-1 text-xs text-muted-foreground">
+              {q
+                ? `${matchCount} match${matchCount === 1 ? '' : 'es'}${hiddenCount ? ` (showing first ${shown.length})` : ''}`
+                : `Showing ${shown.length} of ${total} key${total === 1 ? '' : 's'}. Use search to find one.`}
+            </p>
           )}
         </div>
       )}
