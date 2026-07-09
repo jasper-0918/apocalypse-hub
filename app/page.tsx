@@ -19,6 +19,7 @@ import {
   Rocket,
   TrendingUp,
   Clock,
+  Compass,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -35,6 +36,7 @@ export default function HomePage() {
   const [sort, setSort] = useState<'recent' | 'trending'>('recent');
   const [games, setGames] = useState<GameLink[]>([]);
   const [showAllGames, setShowAllGames] = useState(false);
+  const [discover, setDiscover] = useState<HubScript[]>([]);
 
   useEffect(() => {
     const fetchScripts = async () => {
@@ -60,6 +62,14 @@ export default function HomePage() {
         // API returns games sorted by script count (desc); keep the top 10.
         if (Array.isArray(data) && data.length) setGames(data.slice(0, 10));
       })
+      .catch(() => {});
+  }, []);
+
+  // Trending scripts from the wider community (ScriptBlox discovery catalog).
+  useEffect(() => {
+    fetch('/api/discover?sort=popular&limit=8')
+      .then((r) => (r.ok ? r.json() : { scripts: [] }))
+      .then((data) => setDiscover(Array.isArray(data.scripts) ? data.scripts : []))
       .catch(() => {});
   }, []);
 
@@ -193,6 +203,33 @@ export default function HomePage() {
           </div>
         )}
       </section>
+
+      {/* Trending across the community (ScriptBlox discovery) */}
+      {discover.length > 0 && (
+        <section className="border-t border-border">
+          <div className="max-w-6xl mx-auto px-4 py-8">
+            <div className="flex items-center justify-between gap-4 mb-5">
+              <div className="flex items-center gap-2">
+                <Compass className="h-6 w-6 text-red-500" />
+                <h2 className="text-2xl font-bold text-foreground">Trending Across the Community</h2>
+              </div>
+              <Link href="/discover">
+                <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground">
+                  Explore all
+                </Button>
+              </Link>
+            </div>
+            <p className="text-sm text-muted-foreground mb-5">
+              The most popular Roblox scripts on the hub — unlock any of them with your free key.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {discover.map((s) => (
+                <ScriptHubCard key={s.id} script={s} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* How It Works */}
       <section className="border-t border-border">

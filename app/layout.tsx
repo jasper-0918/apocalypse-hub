@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from '@/lib/seo';
 import { AuthProvider } from '@/components/auth-provider';
+import { ChatWidget } from '@/components/chat-widget';
 import { Analytics } from '@vercel/analytics/react';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -91,7 +92,10 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
         />
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <ChatWidget />
+        </AuthProvider>
         <Analytics />
       </body>
     </html>

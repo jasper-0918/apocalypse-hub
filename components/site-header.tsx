@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
-import { Home, TrendingUp, ScrollText, BookOpen, Key, LayoutDashboard } from 'lucide-react';
+import { Home, TrendingUp, ScrollText, BookOpen, Key, LayoutDashboard, Compass } from 'lucide-react';
 import { Logo } from '@/components/logo';
 
 const NAV = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/trending', label: 'Trending', icon: TrendingUp },
+  { href: '/discover', label: 'Discover', icon: Compass },
   { href: '/rules', label: 'Rules', icon: ScrollText },
   { href: '/docs/index.html', label: 'Docs', icon: BookOpen, external: true },
 ];

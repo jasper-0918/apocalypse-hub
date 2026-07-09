@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, FileCode2, Shield, Search, Trash2, ExternalLink } from 'lucide-react';
+import { ScriptbloxSyncPanel } from '@/components/scriptblox-sync-panel';
 
 export default function AdminScriptsPage() {
   const [scripts, setScripts] = useState<any[]>([]);
@@ -61,6 +62,8 @@ export default function AdminScriptsPage() {
       <p className="text-sm text-muted-foreground mb-6">
         Review uploads and remove anything inappropriate. {scripts.length} total.
       </p>
+
+      <ScriptbloxSyncPanel />
 
       <div className="relative max-w-md mb-6">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
