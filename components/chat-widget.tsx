@@ -167,19 +167,32 @@ export function ChatWidget() {
                     </div>
                   )}
 
-                  {/* Inline links */}
+                  {/* Inline links (internal pages, or external web sources) */}
                   {m.links && m.links.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
-                      {m.links.map((l, j) => (
-                        <Link
-                          key={j}
-                          href={l.href}
-                          onClick={() => setOpen(false)}
-                          className="rounded-full border border-red-900/40 bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/20"
-                        >
-                          {l.label}
-                        </Link>
-                      ))}
+                      {m.links.map((l, j) =>
+                        /^https?:\/\//i.test(l.href) ? (
+                          <a
+                            key={j}
+                            href={l.href}
+                            target="_blank"
+                            rel="noopener noreferrer nofollow"
+                            className="inline-flex items-center gap-1 rounded-full border border-red-900/40 bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/20"
+                          >
+                            {l.label}
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        ) : (
+                          <Link
+                            key={j}
+                            href={l.href}
+                            onClick={() => setOpen(false)}
+                            className="rounded-full border border-red-900/40 bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/20"
+                          >
+                            {l.label}
+                          </Link>
+                        )
+                      )}
                     </div>
                   )}
 

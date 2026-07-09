@@ -1,7 +1,8 @@
 import { createHash } from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { buildScriptSlug } from '@/lib/utils';
+import { buildScriptSlug, slugify } from '@/lib/utils';
 import { fetchScriptbloxList, type ScriptbloxMode, type ScriptbloxScript } from '@/lib/scriptblox';
+import { pingIndexNow } from '@/lib/indexnow';
 
 export const IMPORT_SOURCE = 'scriptblox';
 
@@ -78,6 +79,19 @@ export async function importScriptblox(
   }
 
   await linkActiveKeys(supabase, importedIds);
+
+  // Tell IndexNow (Bing/Yandex/…) about the new/updated pages so they get crawled
+  // within minutes — the main lever for driving search traffic to these scripts.
+  const paths = new Set<string>(['/', '/discover', '/trending']);
+  for (const r of rows) {
+    if (r.slug) paths.add(`/script/${r.slug}`);
+    for (const g of r.games) {
+      const gs = slugify(g);
+      if (gs) paths.add(`/game/${gs}`);
+    }
+  }
+  await pingIndexNow(Array.from(paths));
+
   return { imported: importedIds.length, pagesFetched };
 }
 
