@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { getClientIp, rateLimit, tooManyRequests } from '@/lib/rate-limit';
+import { generateReply } from '@/lib/llm';
 import {
   matchKb,
   detectSearchQuery,
@@ -50,47 +51,11 @@ async function searchScripts(query: string): Promise<Hit[]> {
   return hits;
 }
 
-// Optional: nicer prose via Claude when ANTHROPIC_API_KEY is configured.
-async function callClaude(messages: ChatMessage[], grounding?: string): Promise<string | null> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return null;
-  const model = process.env.ASSISTANT_MODEL || 'claude-haiku-4-5-20251001';
-  const system = grounding ? `${SYSTEM_PROMPT}\n\n${grounding}` : SYSTEM_PROMPT;
-
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 12000);
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 300,
-        system,
-        messages: messages.slice(-8).map((m) => ({ role: m.role, content: m.content })),
-      }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const text = Array.isArray(data?.content)
-      ? data.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('').trim()
-      : '';
-    return text || null;
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
-  const rl = rateLimit(`assistant:${ip}`, 30, 5 * 60 * 1000);
+  // The bot is public and may call a paid/rate-limited LLM, so keep the per-IP
+  // budget modest. Failing over to the rule-based reply keeps it useful anyway.
+  const rl = rateLimit(`assistant:${ip}`, 20, 5 * 60 * 1000);
   if (!rl.ok) return tooManyRequests(rl.retryAfter, 'You are sending messages too fast. Give it a moment.');
 
   const body = await req.json().catch(() => ({}));
@@ -143,8 +108,14 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Prefer a natural reply from Claude when available; otherwise use the KB text.
-  const aiReply = await callClaude(messages, grounding);
+  // Prefer a natural LLM reply when a provider is configured; otherwise fall
+  // back to the deterministic KB/search text. The LLM only writes prose — the
+  // links and script results below always come from our own server logic.
+  const system = grounding ? `${SYSTEM_PROMPT}\n\nContext for this turn: ${grounding}` : SYSTEM_PROMPT;
+  const aiReply = await generateReply(
+    system,
+    messages.map((m) => ({ role: m.role, content: m.content }))
+  );
 
   return NextResponse.json({
     reply: aiReply || ruleReply,
