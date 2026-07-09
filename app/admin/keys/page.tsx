@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Key, CheckCircle, XCircle, Clock, Trash2, Search } from 'lucide-react';
 import { useListSearch } from '@/hooks/use-list-search';
+import { ListPager } from '@/components/list-pager';
 
 export default function AdminKeysPage() {
   const [keys, setKeys] = useState<any[]>([]);
@@ -55,11 +56,12 @@ export default function AdminKeysPage() {
     return { label: 'Available', color: 'bg-amber-600/20 text-amber-400', icon: Clock };
   };
 
-  const { search, setSearch, shown, total, matchCount, hiddenCount, q } = useListSearch(
+  const list = useListSearch(
     keys,
     (k, query) => `${k.value} ${k.assigned_username || ''}`.toLowerCase().includes(query),
-    { limit: 25, searchLimit: 100 }
+    { pageSize: 25 }
   );
+  const { search, setSearch, shown } = list;
 
   return (
     <div className="p-8 max-w-6xl">
@@ -134,13 +136,7 @@ export default function AdminKeysPage() {
             </Card>
           )}
 
-          {shown.length > 0 && (
-            <p className="pt-1 text-xs text-muted-foreground">
-              {q
-                ? `${matchCount} match${matchCount === 1 ? '' : 'es'}${hiddenCount ? ` (showing first ${shown.length})` : ''}`
-                : `Showing ${shown.length} of ${total} key${total === 1 ? '' : 's'}. Use search to find one.`}
-            </p>
-          )}
+          <ListPager {...list} noun="keys" />
         </div>
       )}
     </div>

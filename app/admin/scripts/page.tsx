@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, FileCode2, Shield, Search, Trash2, ExternalLink } from 'lucide-react';
 import { ScriptbloxSyncPanel } from '@/components/scriptblox-sync-panel';
 import { useListSearch } from '@/hooks/use-list-search';
+import { ListPager } from '@/components/list-pager';
 
 export default function AdminScriptsPage() {
   const [scripts, setScripts] = useState<any[]>([]);
@@ -49,14 +50,15 @@ export default function AdminScriptsPage() {
     setBusyId(null);
   };
 
-  const { search, setSearch, shown, total, matchCount, hiddenCount, q } = useListSearch(
+  const list = useListSearch(
     scripts,
     (s, query) =>
       (s.name || '').toLowerCase().includes(query) ||
       (s.owner_username || '').toLowerCase().includes(query) ||
       (s.game || '').toLowerCase().includes(query),
-    { limit: 20, searchLimit: 100 }
+    { pageSize: 20 }
   );
+  const { search, setSearch, shown } = list;
 
   return (
     <div className="p-8 max-w-6xl">
@@ -144,13 +146,7 @@ export default function AdminScriptsPage() {
             </Card>
           )}
 
-          {shown.length > 0 && (
-            <p className="pt-1 text-xs text-muted-foreground">
-              {q
-                ? `${matchCount} match${matchCount === 1 ? '' : 'es'}${hiddenCount ? ` (showing first ${shown.length})` : ''}`
-                : `Showing ${shown.length} of ${total}. Use search to find any script.`}
-            </p>
-          )}
+          <ListPager {...list} noun="scripts" />
         </div>
       )}
     </div>

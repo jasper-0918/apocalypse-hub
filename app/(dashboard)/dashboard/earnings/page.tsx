@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, TrendingUp, Award, Loader2, Wallet, Coins, Search } from 'lucide-react';
 import { useListSearch } from '@/hooks/use-list-search';
+import { ListPager } from '@/components/list-pager';
 
 // Fee constants — keep in sync with lib/earnings.ts
 const USD_FEE_PCT = 0.015;
@@ -83,7 +84,7 @@ export default function EarningsPage() {
   const traffic = useListSearch(
     trafficSorted,
     (s, query) => (s.name || '').toLowerCase().includes(query),
-    { limit: 8, searchLimit: 50 }
+    { pageSize: 8 }
   );
 
   const submit = async () => {
@@ -273,11 +274,7 @@ export default function EarningsPage() {
                     <p className="text-sm text-muted-foreground py-2">No scripts match “{traffic.search}”.</p>
                   )}
                 </div>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  {traffic.q
-                    ? `${traffic.matchCount} match${traffic.matchCount === 1 ? '' : 'es'}`
-                    : `Showing top ${traffic.shown.length} of ${traffic.total} by completions.`}
-                </p>
+                <ListPager {...traffic} noun="scripts" scrollTop={false} />
               </>
             )}
           </CardContent>

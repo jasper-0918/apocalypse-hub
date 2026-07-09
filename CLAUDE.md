@@ -141,9 +141,16 @@ scripts/                 one-off node tooling (sync-scriptblox.mjs bulk importer
   Protected by `CRON_SECRET` (Vercel sends it as `Authorization: Bearer`).
 - Expired-key cleanup is a DB-side pg_cron (migration 016) plus on-demand purge.
 
-### 4.9 Admin / Owner panels
-- `app/admin/*` (staff), `app/owner/*` (owner). Long lists use
-  `hooks/use-list-search.ts` (show first N, search to reveal, "showing X of Y").
+### 4.9 Admin / Owner panels & list UX
+- `app/admin/*` (staff), `app/owner/*` (owner).
+- **Long lists** (My Scripts, admin Users/Keys/Scripts, Earnings traffic) use
+  `hooks/use-list-search.ts` (client-side search + **pagination**: one page at a
+  time, resets to page 1 on search) rendered with `components/list-pager.tsx`
+  (Prev · Page N/M · Next, "Showing X–Y of Z"). Pattern: `const list =
+  useListSearch(items, matcher, { pageSize }); … {list.shown.map(...)}
+  <ListPager {...list} noun="…" />`.
+- `/discover` paginates **server-side** (the API's `page`/`limit` params) with its
+  own Prev/Next, since the imported catalog is too big to load fully client-side.
 
 ---
 

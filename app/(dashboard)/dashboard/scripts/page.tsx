@@ -9,6 +9,7 @@ import { Plus, FileCode2, Loader2, Search } from 'lucide-react';
 import Link from 'next/link';
 import { PAID_PLANS } from '@/lib/plans';
 import { useListSearch } from '@/hooks/use-list-search';
+import { ListPager } from '@/components/list-pager';
 
 export default function ScriptsPage() {
   const { user } = useAuth();
@@ -85,14 +86,15 @@ export default function ScriptsPage() {
     }
   };
 
-  const { search, setSearch, shown, total, matchCount, hiddenCount, q } = useListSearch(
+  const list = useListSearch(
     scripts,
     (s, query) =>
       (s.name || '').toLowerCase().includes(query) ||
       (s.game || '').toLowerCase().includes(query) ||
       (Array.isArray(s.games) ? s.games.join(' ') : '').toLowerCase().includes(query),
-    { limit: 12, searchLimit: 60 }
+    { pageSize: 12 }
   );
+  const { search, setSearch, shown } = list;
 
   const handleTogglePublish = async (id: string, published: boolean) => {
     const token = localStorage.getItem('ah_session');
@@ -181,11 +183,7 @@ export default function ScriptsPage() {
             </div>
           )}
 
-          <p className="mt-4 text-xs text-muted-foreground">
-            {q
-              ? `${matchCount} match${matchCount === 1 ? '' : 'es'}${hiddenCount ? ` (showing first ${shown.length})` : ''}`
-              : `Showing ${shown.length} of ${total}. Use search to find any of your scripts.`}
-          </p>
+          <ListPager {...list} noun="scripts" />
         </>
       )}
     </div>

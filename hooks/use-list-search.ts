@@ -1,31 +1,45 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 /**
- * Shared "search + cap" behaviour for long admin/dashboard lists: keep the page
- * short by rendering only the first `limit` items, and reveal the rest by
- * searching (matches are capped at `searchLimit`). Filtering is client-side over
- * the already-loaded list.
+ * Search + client-side pagination for long admin/dashboard lists. Keeps the page
+ * short by rendering one page at a time (`pageSize`); Next/Prev walk the list and
+ * search filters it (resetting to the first page). Pair with <ListPager>.
  */
 export function useListSearch<T>(
   items: T[],
   matcher: (item: T, q: string) => boolean,
-  opts?: { limit?: number; searchLimit?: number }
+  opts?: { pageSize?: number }
 ) {
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
   const q = search.trim().toLowerCase();
-  const limit = opts?.limit ?? 24;
-  const searchLimit = opts?.searchLimit ?? 100;
+  const pageSize = opts?.pageSize ?? 24;
 
   const filtered = useMemo(() => (q ? items.filter((it) => matcher(it, q)) : items), [items, q, matcher]);
-  const shown = q ? filtered.slice(0, searchLimit) : filtered.slice(0, limit);
+
+  const matchCount = filtered.length;
+  const pageCount = Math.max(1, Math.ceil(matchCount / pageSize));
+  const safePage = Math.min(page, pageCount - 1); // clamp if the list shrank
+
+  // Jump back to the first page whenever the query changes.
+  useEffect(() => {
+    setPage(0);
+  }, [q]);
+
+  const start = safePage * pageSize;
+  const shown = filtered.slice(start, start + pageSize);
 
   return {
     search,
     setSearch,
     q,
     shown,
+    page: safePage,
+    setPage,
+    pageCount,
     total: items.length,
-    matchCount: filtered.length,
-    hiddenCount: Math.max(0, filtered.length - shown.length),
+    matchCount,
+    rangeStart: matchCount === 0 ? 0 : start + 1,
+    rangeEnd: Math.min(matchCount, start + pageSize),
   };
 }

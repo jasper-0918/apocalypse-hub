@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
+import { selectAll } from '@/lib/paginate';
 
 export async function GET(req: NextRequest) {
   const user = await getUserFromRequest(req);
@@ -10,11 +11,15 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = createServerClient();
-  const { data: scripts } = await supabase
-    .from('scripts')
-    .select('id, name, slug, description, is_protected, is_published, game, view_count, created_at, owner_id, users!scripts_owner_id_fkey(username)')
-    .order('created_at', { ascending: false })
-    .limit(200);
+  // Load the whole catalog (paged past the ~1000-row cap) so the admin page's
+  // search + pager can reach every script, not just the most recent 200.
+  const scripts = await selectAll((from, to) =>
+    supabase
+      .from('scripts')
+      .select('id, name, slug, description, is_protected, is_published, game, view_count, created_at, owner_id, users!scripts_owner_id_fkey(username)')
+      .order('created_at', { ascending: false })
+      .range(from, to)
+  );
 
   const formatted = (scripts || []).map((s: any) => ({
     id: s.id,

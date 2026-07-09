@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Search, Shield, Trash2, Send } from 'lucide-react';
 import { useListSearch } from '@/hooks/use-list-search';
+import { ListPager } from '@/components/list-pager';
 
 export default function AdminUsersPage() {
   const { user: me } = useAuth();
@@ -129,11 +130,12 @@ export default function AdminUsersPage() {
     setBusyId(null);
   };
 
-  const { search, setSearch, shown, total, matchCount, hiddenCount, q } = useListSearch(
+  const list = useListSearch(
     users,
     (u, query) => u.username.toLowerCase().includes(query) || u.email.toLowerCase().includes(query),
-    { limit: 25, searchLimit: 100 }
+    { pageSize: 25 }
   );
+  const { search, setSearch, shown, q } = list;
 
   return (
     <div className="p-8 max-w-6xl">
@@ -276,13 +278,7 @@ export default function AdminUsersPage() {
         </Card>
       )}
 
-      {!loading && (
-        <p className="mt-4 text-xs text-muted-foreground">
-          {q
-            ? `${matchCount} match${matchCount === 1 ? '' : 'es'}${hiddenCount ? ` (showing first ${shown.length})` : ''}`
-            : `Showing ${shown.length} of ${total} user${total === 1 ? '' : 's'}. Use search to find anyone.`}
-        </p>
-      )}
+      {!loading && <ListPager {...list} noun="users" />}
     </div>
   );
 }

@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SiteHeader } from '@/components/site-header';
 import { ScriptHubCard, HubScript } from '@/components/script-hub-card';
-import { Compass, Search, Loader2, TrendingUp, Clock, Eye } from 'lucide-react';
+import { Compass, Search, Loader2, TrendingUp, Clock, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const PAGE_SIZE = 48;
 
 export default function DiscoverPage() {
   const [scripts, setScripts] = useState<HubScript[]>([]);
@@ -14,23 +16,45 @@ export default function DiscoverPage() {
   const [search, setSearch] = useState('');
   const [debounced, setDebounced] = useState('');
   const [sort, setSort] = useState<'popular' | 'latest'>('popular');
+  const [page, setPage] = useState(0); // 0-based
+  const [hasMore, setHasMore] = useState(false);
 
-  // Debounce the search box so we don't fire on every keystroke.
+  // Debounce the search box; resetting to page 1 on a new query.
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(search.trim()), 350);
+    const t = setTimeout(() => {
+      setDebounced(search.trim());
+      setPage(0);
+    }, 350);
     return () => clearTimeout(t);
   }, [search]);
 
   useEffect(() => {
     setLoading(true);
-    const params = new URLSearchParams({ sort, limit: '48' });
+    const params = new URLSearchParams({ sort, limit: String(PAGE_SIZE), page: String(page + 1) });
     if (debounced) params.set('search', debounced);
     fetch(`/api/discover?${params}`)
       .then((r) => (r.ok ? r.json() : { scripts: [] }))
-      .then((data) => setScripts(data.scripts || []))
-      .catch(() => setScripts([]))
+      .then((data) => {
+        const list: HubScript[] = data.scripts || [];
+        setScripts(list);
+        setHasMore(list.length === PAGE_SIZE); // a full page implies there may be more
+      })
+      .catch(() => {
+        setScripts([]);
+        setHasMore(false);
+      })
       .finally(() => setLoading(false));
-  }, [sort, debounced]);
+  }, [sort, debounced, page]);
+
+  const changePage = (p: number) => {
+    setPage(Math.max(0, p));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const pickSort = (s: 'popular' | 'latest') => {
+    setSort(s);
+    setPage(0);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -60,7 +84,7 @@ export default function DiscoverPage() {
             <Button
               variant={sort === 'popular' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setSort('popular')}
+              onClick={() => pickSort('popular')}
               className={sort === 'popular' ? 'bg-red-600 hover:bg-red-700 text-white' : 'border-border text-muted-foreground'}
             >
               <TrendingUp className="h-3.5 w-3.5 mr-1.5" /> Popular
@@ -68,7 +92,7 @@ export default function DiscoverPage() {
             <Button
               variant={sort === 'latest' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setSort('latest')}
+              onClick={() => pickSort('latest')}
               className={sort === 'latest' ? 'bg-red-600 hover:bg-red-700 text-white' : 'border-border text-muted-foreground'}
             >
               <Clock className="h-3.5 w-3.5 mr-1.5" /> Latest
@@ -86,20 +110,54 @@ export default function DiscoverPage() {
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary mb-4">
                 <Eye className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">Nothing here yet</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-2">
+                {page > 0 ? 'No more scripts' : 'Nothing here yet'}
+              </h2>
               <p className="text-muted-foreground max-w-md">
                 {debounced
                   ? 'No scripts match your search. Try a different game or keyword.'
+                  : page > 0
+                  ? 'You’ve reached the end.'
                   : 'The discovery catalog is still being imported. Check back shortly.'}
               </p>
+              {page > 0 && (
+                <Button variant="outline" size="sm" className="mt-4" onClick={() => changePage(page - 1)}>
+                  <ChevronLeft className="h-4 w-4 mr-1" /> Back
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {scripts.map((s) => (
-              <ScriptHubCard key={s.id} script={s} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {scripts.map((s) => (
+                <ScriptHubCard key={s.id} script={s} />
+              ))}
+            </div>
+
+            {/* Pager */}
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 0}
+                onClick={() => changePage(page - 1)}
+                className="border-border text-muted-foreground hover:text-foreground disabled:opacity-40"
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" /> Prev
+              </Button>
+              <span className="text-sm text-muted-foreground whitespace-nowrap">Page {page + 1}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!hasMore}
+                onClick={() => changePage(page + 1)}
+                className="border-border text-muted-foreground hover:text-foreground disabled:opacity-40"
+              >
+                Next <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </>
         )}
       </section>
     </div>
