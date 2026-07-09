@@ -28,20 +28,23 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash);
 }
 
-export async function createSessionToken(user: SessionUser): Promise<string> {
+export async function createSessionToken(user: SessionUser, tokenVersion?: number): Promise<string> {
   // Embed the user's current token version so "log out everywhere" (which bumps
-  // the version) can invalidate every token issued before it.
-  let tv = 0;
-  try {
-    const supabase = createServerClient();
-    const { data } = await supabase
-      .from('users')
-      .select('token_version')
-      .eq('id', user.id)
-      .maybeSingle();
-    tv = data?.token_version ?? 0;
-  } catch {
-    /* default 0 if the column/DB isn't reachable */
+  // the version) can invalidate every token issued before it. Callers that just
+  // bumped it can pass the new value to avoid a redundant read.
+  let tv = tokenVersion;
+  if (tv == null) {
+    try {
+      const supabase = createServerClient();
+      const { data } = await supabase
+        .from('users')
+        .select('token_version')
+        .eq('id', user.id)
+        .maybeSingle();
+      tv = data?.token_version ?? 0;
+    } catch {
+      tv = 0; /* default if the column/DB isn't reachable */
+    }
   }
 
   return new SignJWT({ ...user, tv })
@@ -53,10 +56,10 @@ export async function createSessionToken(user: SessionUser): Promise<string> {
 
 /**
  * Invalidate every existing session for a user by bumping their token_version
- * (embedded in each JWT). Best-effort so it can't fail its caller if the
- * token_version column (migration 018) isn't applied yet.
+ * (embedded in each JWT). Returns the new version (or null on error). Best-effort
+ * so it can't fail its caller if the token_version column isn't applied yet.
  */
-export async function bumpTokenVersion(userId: string): Promise<void> {
+export async function bumpTokenVersion(userId: string): Promise<number | null> {
   try {
     const supabase = createServerClient();
     const { data } = await supabase
@@ -64,12 +67,11 @@ export async function bumpTokenVersion(userId: string): Promise<void> {
       .select('token_version')
       .eq('id', userId)
       .maybeSingle();
-    await supabase
-      .from('users')
-      .update({ token_version: ((data as any)?.token_version ?? 0) + 1 })
-      .eq('id', userId);
+    const next = ((data as any)?.token_version ?? 0) + 1;
+    await supabase.from('users').update({ token_version: next }).eq('id', userId);
+    return next;
   } catch {
-    /* token_version column may not exist yet */
+    return null; /* token_version column may not exist yet */
   }
 }
 

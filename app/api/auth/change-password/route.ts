@@ -44,8 +44,8 @@ export async function POST(req: NextRequest) {
 
   // Invalidate every session (including this one's old token), then mint a fresh
   // token so the current device stays signed in while others are cut off.
-  await bumpTokenVersion(user.id);
-  const token = await createSessionToken(user);
+  const newTv = await bumpTokenVersion(user.id);
+  const token = await createSessionToken(user, newTv ?? undefined);
 
   sendPasswordChangedEmail(row.email).catch(() => {});
 

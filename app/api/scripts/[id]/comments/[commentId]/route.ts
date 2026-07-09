@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
+import { isStaff } from '@/lib/plans';
 
 // DELETE /api/scripts/[id]/comments/[commentId] — remove a comment. Allowed for
 // admins/owners (moderation) or the comment's own author.
@@ -21,8 +22,7 @@ export async function DELETE(
 
   if (!comment) return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
 
-  const isStaff = user.role === 'ADMIN' || user.role === 'OWNER';
-  if (!isStaff && comment.user_id !== user.id) {
+  if (!isStaff(user.role) && comment.user_id !== user.id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

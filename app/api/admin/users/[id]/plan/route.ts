@@ -1,7 +1,8 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserFromRequest } from '@/lib/auth';
+import { getUserFromRequest, bumpTokenVersion } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
+import { isStaff } from '@/lib/plans';
 
 const ALLOWED_PLANS = ['FREE', 'SCRIPTER'];
 
@@ -12,7 +13,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   const actor = await getUserFromRequest(req);
-  if (!actor || (actor.role !== 'ADMIN' && actor.role !== 'OWNER')) {
+  if (!actor || !isStaff(actor.role)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -23,6 +24,18 @@ export async function PATCH(
   }
 
   const supabase = createServerClient();
+
+  // Only an OWNER may change another staff account's plan.
+  const { data: target } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', params.id)
+    .maybeSingle();
+  if (!target) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  if (isStaff(target.role) && actor.role !== 'OWNER') {
+    return NextResponse.json({ error: 'Only the owner can change a staff account.' }, { status: 403 });
+  }
+
   const { data: updated } = await supabase
     .from('users')
     .update({ plan })
@@ -33,6 +46,10 @@ export async function PATCH(
   if (!updated) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
+
+  // Plan is read from the session JWT (e.g. paid-key gating), so invalidate the
+  // user's sessions — otherwise the new plan wouldn't apply until the token expires.
+  await bumpTokenVersion(params.id);
 
   return NextResponse.json(updated);
 }

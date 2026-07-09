@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { getToken, storeSession, clearSession, pruneEphemeralSessionOnce } from '@/lib/session';
+import { getToken, storeSession, clearSession } from '@/lib/session';
 
 interface User {
   id: string;
@@ -27,9 +27,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Drop an expired "don't remember me" session before we read the token.
-  pruneEphemeralSessionOnce();
-
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();

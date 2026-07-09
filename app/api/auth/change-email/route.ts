@@ -34,11 +34,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'That is already your email.' }, { status: 400 });
   }
 
-  // Reject if another account already uses the new email.
+  // Reject if another account already uses the new email (as its address or a
+  // pending change).
   const { data: taken } = await supabase
     .from('users')
     .select('id')
-    .eq('email', newEmail)
+    .or(`email.eq.${newEmail},pending_email.eq.${newEmail}`)
     .neq('id', user.id)
     .maybeSingle();
   if (taken) {
@@ -46,11 +47,14 @@ export async function POST(req: NextRequest) {
   }
 
   if (isEmailConfigured()) {
+    // Store the new address as PENDING and send a code to it. The account's real
+    // email doesn't change until the code is verified, so an unverified/typo'd
+    // address can never take over the account or hijack password recovery.
     const code = generateCode();
     const expires = new Date(Date.now() + 15 * 60 * 1000).toISOString();
     const { error } = await supabase
       .from('users')
-      .update({ email: newEmail, email_verified: false, verification_code: code, verification_expires: expires })
+      .update({ pending_email: newEmail, verification_code: code, verification_expires: expires })
       .eq('id', user.id);
     if (error) {
       return NextResponse.json({ error: 'Could not update your email.' }, { status: 500 });
@@ -59,7 +63,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, needsVerification: true, email: newEmail });
   }
 
-  // No email service configured — just change it.
+  // No email service configured — nothing to verify against, so change directly.
   const { error } = await supabase.from('users').update({ email: newEmail }).eq('id', user.id);
   if (error) {
     return NextResponse.json({ error: 'Could not update your email.' }, { status: 500 });

@@ -6,7 +6,8 @@ import { createServerClient } from '@/lib/supabase/server';
 // DELETE /api/admin/users/[id] — remove a user account (admin/owner only).
 // Scripts, sessions, key_requests, earnings, orders, etc. all cascade or
 // set-null on the users FK; only keys.assigned_to has no cascade, so we clear
-// those first. Guards prevent deleting yourself or an OWNER account.
+// those first. Guards prevent deleting yourself, an OWNER, or (for a plain
+// admin) another admin.
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -32,6 +33,10 @@ export async function DELETE(
   }
   if (target.role === 'OWNER') {
     return NextResponse.json({ error: 'Owner accounts cannot be deleted.' }, { status: 403 });
+  }
+  // Only an owner can delete an admin — one admin can't wipe another.
+  if (target.role === 'ADMIN' && actor.role !== 'OWNER') {
+    return NextResponse.json({ error: 'Only the owner can delete an admin account.' }, { status: 403 });
   }
 
   // Clear keys assigned to this user (the one FK to users that doesn't cascade).

@@ -4,6 +4,7 @@ import { getUserFromRequest } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
 import { slugify } from '@/lib/utils';
 import { pingIndexNow } from '@/lib/indexnow';
+import { isStaff } from '@/lib/plans';
 
 export async function DELETE(
   req: NextRequest,
@@ -24,7 +25,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Script not found' }, { status: 404 });
   }
 
-  if ((script as any).owner_id !== user.id && user.role !== 'ADMIN') {
+  if ((script as any).owner_id !== user.id && !isStaff(user.role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -52,7 +53,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Script not found' }, { status: 404 });
   }
 
-  if ((script as any).owner_id !== user.id && user.role !== 'ADMIN') {
+  if ((script as any).owner_id !== user.id && !isStaff(user.role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -136,7 +137,7 @@ export async function GET(
     return NextResponse.json({ error: 'Script not found' }, { status: 404 });
   }
 
-  if ((script as any).owner_id !== user.id && user.role !== 'ADMIN') {
+  if ((script as any).owner_id !== user.id && !isStaff(user.role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

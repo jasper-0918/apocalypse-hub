@@ -13,11 +13,18 @@ interface Bucket {
 
 const buckets = new Map<string, Bucket>();
 
-/** Best-effort client IP from the proxy headers Vercel sets. */
+/**
+ * Best-effort client IP. Prefer `x-real-ip` — Vercel sets it to the true client
+ * IP and clients can't spoof it. `x-forwarded-for` is only a fallback because its
+ * left-most value is client-supplied (Vercel appends the real IP to the right),
+ * so keying the limiter off it would let an attacker rotate the header to bypass.
+ */
 export function getClientIp(req: Request): string {
+  const realIp = req.headers.get('x-real-ip');
+  if (realIp) return realIp.trim();
   const xff = req.headers.get('x-forwarded-for');
   if (xff) return xff.split(',')[0].trim();
-  return req.headers.get('x-real-ip') || 'unknown';
+  return 'unknown';
 }
 
 export interface RateResult {

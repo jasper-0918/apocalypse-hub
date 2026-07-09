@@ -26,10 +26,15 @@ export function effectiveScriptLimit(plan: string, extraSlotPacks = 0): number {
   return base + extraSlotPacks * SLOT_ADDON.slotsPerPack;
 }
 
+/** Staff = admin or owner. Shared so every route checks the same way. */
+export function isStaff(role?: string): boolean {
+  return role === 'ADMIN' || role === 'OWNER';
+}
+
 /**
  * Staff (owner/admin) accounts get unlimited perks: no script cap and keys that
  * never expire. Keyed on role, not plan.
  */
 export function hasUnlimitedPerks(role?: string): boolean {
-  return role === 'ADMIN' || role === 'OWNER';
+  return isStaff(role);
 }
