@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
+import { selectAll } from '@/lib/paginate';
 import { getSellerTier, SELLER_TIERS, GROSS_USD_PER_COMPLETION } from '@/lib/earnings';
 
 // GET: the signed-in creator's earnings summary.
@@ -30,12 +31,15 @@ export async function GET(req: NextRequest) {
     .select('*', { count: 'exact', head: true })
     .eq('owner_id', user.id);
 
-  // Per-script traffic breakdown.
-  const { data: scripts } = await supabase
-    .from('scripts')
-    .select('id, name, completion_count, is_published')
-    .eq('owner_id', user.id)
-    .order('completion_count', { ascending: false });
+  // Per-script traffic breakdown (paged so the full catalog is covered).
+  const scripts = await selectAll((from, to) =>
+    supabase
+      .from('scripts')
+      .select('id, name, completion_count, is_published')
+      .eq('owner_id', user.id)
+      .order('completion_count', { ascending: false })
+      .range(from, to)
+  );
 
   return NextResponse.json({
     balanceUsd: balance,

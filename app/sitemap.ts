@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { createServerClient } from '@/lib/supabase/server';
 import { getGameSummaries } from '@/lib/scripts-server';
+import { selectAll } from '@/lib/paginate';
 import { SITE_URL } from '@/lib/seo';
 
 // Regenerate at most hourly so newly published scripts appear without a redeploy.
@@ -23,23 +24,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let scripts: any[] = [];
   try {
     const supabase = createServerClient();
-    const rich = await supabase
-      .from('scripts')
-      .select('id, slug, updated_at, created_at')
-      .eq('is_published', true)
-      .order('created_at', { ascending: false })
-      .limit(5000);
-    let data: any[] | null = rich.data as any[] | null;
-    if (rich.error || !data) {
-      // Pre-migration fallback (no slug column yet).
-      const legacy = await supabase
+    // Page through every published script (PostgREST caps a single call at ~1000).
+    scripts = await selectAll((from, to) =>
+      supabase
         .from('scripts')
-        .select('id, created_at')
+        .select('id, slug, updated_at, created_at')
         .eq('is_published', true)
-        .limit(5000);
-      data = legacy.data as any[] | null;
+        .order('created_at', { ascending: false })
+        .range(from, to)
+    );
+    if (scripts.length === 0) {
+      // Pre-migration fallback (no slug column yet).
+      scripts = await selectAll((from, to) =>
+        supabase
+          .from('scripts')
+          .select('id, created_at')
+          .eq('is_published', true)
+          .order('created_at', { ascending: false })
+          .range(from, to)
+      );
     }
-    scripts = data || [];
   } catch {
     scripts = [];
   }

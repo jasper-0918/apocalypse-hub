@@ -8,6 +8,7 @@ import { effectiveScriptLimit, hasUnlimitedPerks } from '@/lib/plans';
 import { scriptUploadSchema } from '@/lib/validators';
 import { buildScriptSlug, slugify } from '@/lib/utils';
 import { pingIndexNow } from '@/lib/indexnow';
+import { selectAll } from '@/lib/paginate';
 import { randomUUID } from 'crypto';
 
 export async function POST(req: NextRequest) {
@@ -148,17 +149,22 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET: List user's own scripts (authenticated)
+// GET: List user's own scripts (authenticated). Paged so accounts with >1000
+// scripts (e.g. bulk-imported catalogs) get their full list, not just the first
+// PostgREST page.
 export async function GET(req: NextRequest) {
   const user = await getUserFromRequest(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const supabase = createServerClient();
-  const { data: scripts } = await supabase
-    .from('scripts')
-    .select('id, name, slug, description, is_protected, is_published, game, games, view_count, created_at, updated_at')
-    .eq('owner_id', user.id)
-    .order('created_at', { ascending: false });
+  const scripts = await selectAll((from, to) =>
+    supabase
+      .from('scripts')
+      .select('id, name, slug, description, is_protected, is_published, game, games, view_count, created_at, updated_at')
+      .eq('owner_id', user.id)
+      .order('created_at', { ascending: false })
+      .range(from, to)
+  );
 
-  return NextResponse.json(scripts || []);
+  return NextResponse.json(scripts);
 }

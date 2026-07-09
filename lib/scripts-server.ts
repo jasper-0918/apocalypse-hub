@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { createServerClient } from '@/lib/supabase/server';
+import { selectAll } from '@/lib/paginate';
 import { SITE_URL } from '@/lib/seo';
 import { slugify } from '@/lib/utils';
 import type { HubScript } from '@/components/script-hub-card';
@@ -82,25 +83,29 @@ const CATALOG_LEGACY =
 // in a single request.
 const getPublishedCatalog = cache(async (): Promise<any[]> => {
   const supabase = createServerClient();
+  // Page through the whole published catalog (PostgREST caps one call at ~1000).
   try {
-    const { data, error } = await supabase
-      .from('scripts')
-      .select(CATALOG_RICH)
-      .eq('is_published', true)
-      .order('view_count', { ascending: false })
-      .limit(2000);
-    if (!error && data) return data as any[];
+    const rows = await selectAll((from, to) =>
+      supabase
+        .from('scripts')
+        .select(CATALOG_RICH)
+        .eq('is_published', true)
+        .order('view_count', { ascending: false })
+        .range(from, to)
+    );
+    if (rows.length) return rows;
   } catch {
     /* fall through to legacy */
   }
   try {
-    const { data } = await supabase
-      .from('scripts')
-      .select(CATALOG_LEGACY)
-      .eq('is_published', true)
-      .order('created_at', { ascending: false })
-      .limit(2000);
-    return (data as any[]) || [];
+    return await selectAll((from, to) =>
+      supabase
+        .from('scripts')
+        .select(CATALOG_LEGACY)
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
+        .range(from, to)
+    );
   } catch {
     return [];
   }
