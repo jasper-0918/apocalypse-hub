@@ -12,6 +12,7 @@ import {
   WEB_SYSTEM_PROMPT,
   type ChatMessage,
   type AssistantLink,
+  type ScriptHit,
 } from '@/lib/assistant';
 
 function hostLabel(url: string): string {
@@ -22,14 +23,7 @@ function hostLabel(url: string): string {
   }
 }
 
-interface Hit {
-  title: string;
-  game: string;
-  href: string;
-  views: number;
-  source: 'internal' | 'external';
-  external?: boolean;
-}
+type Hit = ScriptHit;
 
 // Find matching published scripts in the catalog (includes imported ones).
 async function searchScripts(query: string): Promise<Hit[]> {
@@ -51,7 +45,6 @@ async function searchScripts(query: string): Promise<Hit[]> {
         game: s.game || 'Universal',
         href: `/script/${s.slug || ''}`,
         views: s.view_count ?? 0,
-        source: 'internal',
       });
     }
   } catch {

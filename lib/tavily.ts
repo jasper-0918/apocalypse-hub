@@ -2,6 +2,8 @@
 // Multiple keys are rotated (free-tier friendly). Returns a short answer + the top
 // source results; the caller grounds the LLM on these and shows the sources.
 
+import { readEnvKeys, shuffle } from '@/lib/provider-keys';
+
 export interface WebResult {
   title: string;
   url: string;
@@ -13,37 +15,18 @@ export interface WebSearch {
   results: WebResult[];
 }
 
-function readKeys(): string[] {
-  const raw = process.env.TAVILY_API_KEYS || process.env.TAVILY_API_KEY || '';
-  return Array.from(
-    new Set(
-      raw
-        .split(/[,\s]+/)
-        .map((k) => k.trim())
-        .filter(Boolean)
-    )
-  );
-}
+const TAVILY_KEYS = () => readEnvKeys('TAVILY_API_KEYS', 'TAVILY_API_KEY');
 
 export function isWebSearchConfigured(): boolean {
-  return readKeys().length > 0;
-}
-
-function shuffled<T>(arr: T[]): T[] {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+  return TAVILY_KEYS().length > 0;
 }
 
 /** Search the web via Tavily. Returns null if not configured or every key fails. */
 export async function webSearch(query: string): Promise<WebSearch | null> {
-  const keys = readKeys();
+  const keys = TAVILY_KEYS();
   if (keys.length === 0 || !query.trim()) return null;
 
-  for (const key of shuffled(keys)) {
+  for (const key of shuffle(keys)) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 8000);
     try {

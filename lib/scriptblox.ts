@@ -1,5 +1,6 @@
-// Thin client for the public ScriptBlox API. Used to populate the "Discover"
-// catalog (external_scripts). We only read public listing endpoints:
+// Thin client for the public ScriptBlox API. Feeds the importer
+// (lib/import-scripts.ts), which turns these into owned key-gated scripts.
+// We only read public listing endpoints:
 //   * latest   -> /api/script/fetch?page=N
 //   * popular  -> /api/script/fetch?sortBy=views&order=desc&page=N
 //   * search   -> /api/script/search?q=...&sortBy=views&order=desc&page=N

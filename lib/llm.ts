@@ -10,6 +10,8 @@
 // The assistant is intentionally TEXT-ONLY: the model never gets tools or DB
 // access, so a jailbreak can't do anything but produce off-topic text.
 
+import { readEnvKeys, shuffle } from '@/lib/provider-keys';
+
 export interface LlmMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -25,39 +27,12 @@ interface Provider {
   keys: string[];
 }
 
-// Split a comma/newline/space separated key list from any of the given env vars.
-function readKeys(...names: string[]): string[] {
-  for (const n of names) {
-    const raw = process.env[n];
-    if (raw && raw.trim()) {
-      return Array.from(
-        new Set(
-          raw
-            .split(/[,\s]+/)
-            .map((k) => k.trim())
-            .filter(Boolean)
-        )
-      );
-    }
-  }
-  return [];
-}
-
-function shuffled<T>(arr: T[]): T[] {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
 // Build the enabled provider list, in priority order. Only providers with at
 // least one key are included.
 function getProviders(): Provider[] {
   const catalog: Record<string, () => Provider | null> = {
     groq: () => {
-      const keys = readKeys('GROQ_API_KEYS', 'GROQ_API_KEY');
+      const keys = readEnvKeys('GROQ_API_KEYS', 'GROQ_API_KEY');
       return keys.length
         ? {
             name: 'groq',
@@ -69,7 +44,7 @@ function getProviders(): Provider[] {
         : null;
     },
     cerebras: () => {
-      const keys = readKeys('CEREBRAS_API_KEYS', 'CEREBRAS_API_KEY');
+      const keys = readEnvKeys('CEREBRAS_API_KEYS', 'CEREBRAS_API_KEY');
       return keys.length
         ? {
             name: 'cerebras',
@@ -81,7 +56,7 @@ function getProviders(): Provider[] {
         : null;
     },
     openrouter: () => {
-      const keys = readKeys('OPENROUTER_API_KEYS', 'OPENROUTER_API_KEY');
+      const keys = readEnvKeys('OPENROUTER_API_KEYS', 'OPENROUTER_API_KEY');
       return keys.length
         ? {
             name: 'openrouter',
@@ -93,7 +68,7 @@ function getProviders(): Provider[] {
         : null;
     },
     anthropic: () => {
-      const keys = readKeys('ANTHROPIC_API_KEYS', 'ANTHROPIC_API_KEY');
+      const keys = readEnvKeys('ANTHROPIC_API_KEYS', 'ANTHROPIC_API_KEY');
       return keys.length
         ? {
             name: 'anthropic',
@@ -205,7 +180,7 @@ async function callAnthropic(
 export async function generateReply(system: string, messages: LlmMessage[]): Promise<string | null> {
   const trimmed = messages.slice(-8);
   for (const p of getProviders()) {
-    for (const key of shuffled(p.keys)) {
+    for (const key of shuffle(p.keys)) {
       const text =
         p.kind === 'anthropic'
           ? await callAnthropic(p, key, system, trimmed)

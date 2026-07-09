@@ -5,22 +5,13 @@ import Link from 'next/link';
 import { MessageCircle, X, Send, Loader2, ExternalLink, Eye } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { formatCount } from '@/lib/utils';
-import { GREETING, ASSISTANT_NAME, DEFAULT_SUGGESTIONS, type AssistantLink } from '@/lib/assistant';
-
-interface Hit {
-  title: string;
-  game: string;
-  href: string;
-  views: number;
-  source: 'internal' | 'external';
-  external?: boolean;
-}
+import { GREETING, ASSISTANT_NAME, DEFAULT_SUGGESTIONS, type AssistantLink, type ScriptHit } from '@/lib/assistant';
 
 interface Msg {
   role: 'user' | 'assistant';
   content: string;
   links?: AssistantLink[];
-  hits?: Hit[];
+  hits?: ScriptHit[];
   suggestions?: string[];
 }
 
@@ -127,43 +118,23 @@ export function ChatWidget() {
                   {/* Script results */}
                   {m.hits && m.hits.length > 0 && (
                     <div className="space-y-1.5">
-                      {m.hits.map((h, j) =>
-                        h.external ? (
-                          <a
-                            key={j}
-                            href={h.href}
-                            target="_blank"
-                            rel="noopener noreferrer nofollow"
-                            className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 text-xs transition-colors hover:border-red-900/40"
-                          >
-                            <span className="min-w-0">
-                              <span className="block truncate font-medium text-foreground">{h.title}</span>
-                              <span className="block truncate text-muted-foreground">{h.game}</span>
-                            </span>
-                            <span className="flex shrink-0 items-center gap-1 text-muted-foreground">
-                              <Eye className="h-3 w-3" />
-                              {formatCount(h.views)}
-                              <ExternalLink className="ml-1 h-3 w-3" />
-                            </span>
-                          </a>
-                        ) : (
-                          <Link
-                            key={j}
-                            href={h.href}
-                            onClick={() => setOpen(false)}
-                            className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 text-xs transition-colors hover:border-red-900/40"
-                          >
-                            <span className="min-w-0">
-                              <span className="block truncate font-medium text-foreground">{h.title}</span>
-                              <span className="block truncate text-muted-foreground">{h.game}</span>
-                            </span>
-                            <span className="flex shrink-0 items-center gap-1 text-muted-foreground">
-                              <Eye className="h-3 w-3" />
-                              {formatCount(h.views)}
-                            </span>
-                          </Link>
-                        )
-                      )}
+                      {m.hits.map((h, j) => (
+                        <Link
+                          key={j}
+                          href={h.href}
+                          onClick={() => setOpen(false)}
+                          className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 text-xs transition-colors hover:border-red-900/40"
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate font-medium text-foreground">{h.title}</span>
+                            <span className="block truncate text-muted-foreground">{h.game}</span>
+                          </span>
+                          <span className="flex shrink-0 items-center gap-1 text-muted-foreground">
+                            <Eye className="h-3 w-3" />
+                            {formatCount(h.views)}
+                          </span>
+                        </Link>
+                      ))}
                     </div>
                   )}
 

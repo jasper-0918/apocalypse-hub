@@ -13,6 +13,15 @@ export interface AssistantLink {
   href: string;
 }
 
+// A script search result returned to the chat widget (always an on-site,
+// key-gated script — the model never produces these; server logic does).
+export interface ScriptHit {
+  title: string;
+  game: string;
+  href: string;
+  views: number;
+}
+
 export interface KbEntry {
   id: string;
   keywords: string[];
