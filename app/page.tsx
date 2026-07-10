@@ -28,6 +28,31 @@ interface GameLink {
   count: number;
 }
 
+// Visible FAQ + FAQPage structured data. Adds crawlable, long-tail keyword
+// content to the homepage and answers the questions new visitors actually ask.
+const FAQS: { q: string; a: string }[] = [
+  {
+    q: 'Are the Roblox scripts on Apocalypse Blox Hub free?',
+    a: 'Yes. Every script is free to use — you just unlock it with a quick key system. Copy the loadstring, drop in your key, and run it in your executor.',
+  },
+  {
+    q: 'How does the key system work?',
+    a: 'Open any script, complete a short step on the key provider (Work.ink, Linkvertise, or Lootlabs) to claim a free key, then paste that key into the loadstring in place of YOUR_KEY_HERE.',
+  },
+  {
+    q: 'Is it safe to run these scripts?',
+    a: 'Scripts are delivered obfuscated and served through our own gateway, so the source host is never exposed. As with any Roblox script, only run it in a trusted executor and never share your key.',
+  },
+  {
+    q: 'Which Roblox executors are supported?',
+    a: 'Any executor that supports loadstring and game:HttpGet works — the loadstring format is standard, so it runs the same across popular executors.',
+  },
+  {
+    q: 'Can I upload my own scripts and earn from them?',
+    a: 'Yes. Create a free account to upload, obfuscate, and key-lock your Lua scripts. You earn per unique key-system completion on scripts you own.',
+  },
+];
+
 export default function HomePage() {
   const [scripts, setScripts] = useState<HubScript[]>([]);
   const [loading, setLoading] = useState(true);
@@ -297,6 +322,38 @@ export default function HomePage() {
                   <p className="text-xs text-muted-foreground leading-relaxed">{step.description}</p>
                 </CardContent>
               </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ (+ FAQPage structured data for search) */}
+      <section className="border-t border-border">
+        <div className="max-w-3xl mx-auto px-4 py-12">
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'FAQPage',
+                mainEntity: FAQS.map((f) => ({
+                  '@type': 'Question',
+                  name: f.q,
+                  acceptedAnswer: { '@type': 'Answer', text: f.a },
+                })),
+              }),
+            }}
+          />
+          <h2 className="text-2xl font-bold text-foreground mb-8 text-center">Frequently Asked Questions</h2>
+          <div className="space-y-3">
+            {FAQS.map((f) => (
+              <details key={f.q} className="group rounded-lg border border-border bg-card px-4 py-3">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-foreground">
+                  {f.q}
+                  <span className="text-red-400 transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.a}</p>
+              </details>
             ))}
           </div>
         </div>

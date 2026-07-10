@@ -136,7 +136,8 @@ scripts/                 one-off node tooling (sync-scriptblox.mjs bulk importer
   `app/api/og/route.tsx` (dynamic OG images), root metadata + JSON-LD in
   `app/layout.tsx`, `lib/seo.ts` (`SITE_URL`, `SITE_NAME`, …).
 - **Structured data (JSON-LD):** root `Organization` + `WebSite` (with a
-  `SearchAction` sitelinks searchbox pointing at `/?search={term}`); each
+  `SearchAction` sitelinks searchbox pointing at `/?search={term}`); the homepage
+  has a visible FAQ + `FAQPage`; each
   `script/[slug]` emits `SoftwareApplication` (incl. an honest
   `interactionStatistic` view count — never fabricated ratings) + `BreadcrumbList`;
   each `game/[slug]` emits `CollectionPage`/`ItemList`.
