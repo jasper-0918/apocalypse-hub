@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { selectAll } from '@/lib/paginate';
 import { SITE_URL } from '@/lib/seo';
 import { slugify } from '@/lib/utils';
+import { IMPORT_SOURCE } from '@/lib/import-scripts';
 import type { HubScript } from '@/components/script-hub-card';
 
 // Server-only detail shape used for SSR + metadata on the script page.
@@ -131,6 +132,44 @@ function toHubScript(s: any): HubScript {
     owner_username: s.users?.username || undefined,
   };
 }
+
+// Newest published scripts. Mirrors GET /api/scripts/catalog (default sort +
+// default limit) so the homepage can server-render the same first page the
+// client would have fetched, then skip that fetch on mount.
+export const getRecentScripts = cache(async (limit = 100): Promise<HubScript[]> => {
+  const supabase = createServerClient();
+  try {
+    const { data, error } = await supabase
+      .from('scripts')
+      .select(CATALOG_RICH)
+      .eq('is_published', true)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return (data || []).map(toHubScript);
+  } catch {
+    return [];
+  }
+});
+
+// Most-viewed imported scripts. Mirrors GET /api/discover?sort=popular.
+// Degrades to [] if migration 024 (external_source) hasn't been applied.
+export const getPopularImported = cache(async (limit = 8): Promise<HubScript[]> => {
+  const supabase = createServerClient();
+  try {
+    const { data, error } = await supabase
+      .from('scripts')
+      .select(CATALOG_RICH)
+      .eq('is_published', true)
+      .eq('external_source', IMPORT_SOURCE)
+      .order('view_count', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return (data || []).map(toHubScript);
+  } catch {
+    return [];
+  }
+});
 
 export interface GameSummary {
   slug: string;

@@ -200,6 +200,13 @@ scripts/                 one-off node tooling (sync-scriptblox.mjs bulk importer
     filter+sort paths (pure optimization, additive — safe to apply live).
 - **Big tables use `lib/paginate.ts` `selectAll()`** — PostgREST caps a single
   SELECT at ~1000 rows, so sitemap / My Scripts / earnings / catalog page through.
+- **The homepage is a server component** (`app/page.tsx`, ISR `revalidate = 300`)
+  that fetches the initial catalog/games/community picks and passes them to
+  `app/home-client.tsx`. This puts real `/script/<slug>` links in the SSR HTML
+  (internal linking) and skips three client round-trips. `HomeClient` seeds state
+  from those props and **skips its first catalog fetch** (a `useRef` guard) unless
+  there's a `?search=`. Never read `searchParams` in `app/page.tsx` — it would make
+  the route dynamic and uncacheable; the client reads the query after hydration.
 - **`/script/[slug]` and `/game/[slug]` are ISR** (`revalidate = 300` +
   `generateStaticParams() => []`). The empty array is load-bearing: without a
   `generateStaticParams` export Next renders the route purely dynamically and
