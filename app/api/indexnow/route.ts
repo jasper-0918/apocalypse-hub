@@ -4,6 +4,7 @@ import { getUserFromRequest } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
 import { getGameSummaries } from '@/lib/scripts-server';
 import { pingIndexNow } from '@/lib/indexnow';
+import { selectAll } from '@/lib/paginate';
 
 // Admin-only: submit every public page (home, browse pages, all game pages, all
 // published scripts) to IndexNow in one shot. Handy for a brand-new site or
@@ -25,12 +26,11 @@ export async function POST(req: NextRequest) {
 
   try {
     const supabase = createServerClient();
-    const { data } = await supabase
-      .from('scripts')
-      .select('id, slug')
-      .eq('is_published', true)
-      .limit(5000);
-    for (const s of (data as any[]) || []) paths.add(`/script/${s.slug || s.id}`);
+    // Page past the 1000-row cap so a big catalog is fully submitted.
+    const data = await selectAll<{ id: string; slug: string | null }>((from, to) =>
+      supabase.from('scripts').select('id, slug').eq('is_published', true).range(from, to)
+    );
+    for (const s of data) paths.add(`/script/${s.slug || s.id}`);
   } catch {
     /* still submit whatever we have */
   }

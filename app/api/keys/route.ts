@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
 import { generateKeyValue, getKeyExpiry } from '@/lib/keygen';
-import { deleteExpiredKeys } from '@/lib/keys';
+import { deleteExpiredKeys, linkKeyToPublishedScripts } from '@/lib/keys';
 import { earningsForCompletion, UNIQUE_COMPLETION_WINDOW_HOURS } from '@/lib/earnings';
 import { isGateEnforced } from '@/lib/keyproviders';
 import { hasUnlimitedPerks } from '@/lib/plans';
@@ -172,20 +172,9 @@ export async function POST(req: NextRequest) {
     key_id: activatedKey?.id,
   });
 
-  // Link this key to all published scripts (universal key)
-  const { data: publishedScripts } = await supabase
-    .from('scripts')
-    .select('id')
-    .eq('is_published', true);
-
-  if (publishedScripts && activatedKey) {
-    for (const script of publishedScripts) {
-      await supabase
-        .from('script_keys')
-        .insert({ script_id: script.id, key_id: activatedKey.id })
-        .select();
-    }
-  }
+  // Link this key to every published script (universal key). Bulk + paged, so
+  // it covers the whole catalog (not just the first 1000) in a few round-trips.
+  await linkKeyToPublishedScripts(supabase, activatedKey.id);
 
   // ---- Credit the creator for this key-system completion ----
   // Attributed to the specific script the user was unlocking. Self-completions

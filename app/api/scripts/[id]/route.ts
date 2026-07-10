@@ -5,6 +5,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { slugify } from '@/lib/utils';
 import { pingIndexNow } from '@/lib/indexnow';
 import { isStaff } from '@/lib/plans';
+import { linkScriptToActiveKeys } from '@/lib/keys';
 
 export async function DELETE(
   req: NextRequest,
@@ -85,22 +86,9 @@ export async function PATCH(
       .select()
       .single();
 
-    // When publishing, link all active keys to this script
+    // When publishing, link every active key to this script (paged + bulk).
     if (body.isPublished === true) {
-      const { data: activeKeys } = await supabase
-        .from('keys')
-        .select('id')
-        .eq('is_active', true)
-        .gt('expires_at', new Date().toISOString());
-
-      if (activeKeys && updated) {
-        for (const key of activeKeys) {
-          await supabase.from('script_keys').upsert({
-            script_id: updated.id,
-            key_id: key.id,
-          }, { onConflict: 'script_id,key_id' });
-        }
-      }
+      if (updated) await linkScriptToActiveKeys(supabase, updated.id);
 
       // Ask search engines to (re)crawl the now-public page and its listings.
       if (updated) {

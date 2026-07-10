@@ -9,6 +9,7 @@ import { scriptUploadSchema } from '@/lib/validators';
 import { buildScriptSlug, slugify } from '@/lib/utils';
 import { pingIndexNow } from '@/lib/indexnow';
 import { selectAll } from '@/lib/paginate';
+import { linkScriptToActiveKeys } from '@/lib/keys';
 import { randomUUID } from 'crypto';
 
 export async function POST(req: NextRequest) {
@@ -113,22 +114,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to create script' }, { status: 500 });
     }
 
-    // If published, link all currently active keys to this script
+    // If published, link every currently active key to this script (paged + bulk).
     if (isPublished) {
-      const { data: activeKeys } = await supabase
-        .from('keys')
-        .select('id')
-        .eq('is_active', true)
-        .gt('expires_at', new Date().toISOString());
-
-      if (activeKeys) {
-        for (const key of activeKeys) {
-          await supabase.from('script_keys').upsert({
-            script_id: script.id,
-            key_id: key.id,
-          }, { onConflict: 'script_id,key_id' });
-        }
-      }
+      await linkScriptToActiveKeys(supabase, script.id);
 
       // Nudge search engines to crawl the new page (and the listings it appears
       // on) right away instead of waiting for the next scheduled recrawl.

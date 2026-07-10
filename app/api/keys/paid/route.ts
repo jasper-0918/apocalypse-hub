@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
 import { generateKeyValue } from '@/lib/keygen';
+import { linkKeyToPublishedScripts } from '@/lib/keys';
 import { PAID_PLANS } from '@/lib/plans';
 
 function thirtyDaysFromNow() {
@@ -68,20 +69,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to generate key' }, { status: 500 });
   }
 
-  // Link to all published scripts
-  const { data: scripts } = await supabase
-    .from('scripts')
-    .select('id')
-    .eq('is_published', true);
-
-  if (scripts) {
-    for (const script of scripts) {
-      await supabase
-        .from('script_keys')
-        .insert({ script_id: script.id, key_id: newKey.id })
-        .select();
-    }
-  }
+  // Link to every published script (paged + bulk).
+  await linkKeyToPublishedScripts(supabase, newKey.id);
 
   return NextResponse.json({ key: newKey });
 }
