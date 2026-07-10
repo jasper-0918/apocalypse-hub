@@ -11,6 +11,7 @@ import { SiteHeader } from '@/components/site-header';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { useAuth } from '@/components/auth-provider';
 import { timeAgo, formatCount, slugify } from '@/lib/utils';
+import { copyText } from '@/lib/clipboard';
 import {
   Key, Copy, CheckCircle, Download, ThumbsUp, ThumbsDown, Star,
   AlertTriangle, Eye, Clock, Gamepad2, Loader2, User, MessageSquare, ArrowLeft, Trash2,
@@ -114,11 +115,12 @@ export function ScriptDetailClient({
     if (res.ok) setScript({ ...script, reactions: await res.json() });
   };
 
-  const copyLoadstring = () => {
+  const copyLoadstring = async () => {
     if (!script) return;
-    navigator.clipboard.writeText(script.loadstring);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (await copyText(script.loadstring)) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const downloadScript = () => {

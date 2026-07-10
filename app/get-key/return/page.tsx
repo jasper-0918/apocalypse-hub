@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle, XCircle, Key, Copy, Clock } from 'lucide-react';
 import { Logo } from '@/components/logo';
+import { copyText } from '@/lib/clipboard';
 
 type Phase = 'verifying' | 'claiming' | 'done' | 'error';
 
@@ -94,7 +95,7 @@ export default function KeyReturnPage() {
     })();
   }, []);
 
-  const copyKey = () => keyValue && navigator.clipboard.writeText(keyValue);
+  const copyKey = () => { if (keyValue) copyText(keyValue); };
 
   return (
     <div className="min-h-screen bg-background">

@@ -10,6 +10,7 @@ import {
   Copy, ExternalLink, Crown, Shield
 } from 'lucide-react';
 import { siteBaseUrl } from '@/lib/utils';
+import { copyText } from '@/lib/clipboard';
 import { PAID_PLANS } from '@/lib/plans';
 import Link from 'next/link';
 
@@ -75,10 +76,11 @@ export default function KeysPage() {
     setGenerating(false);
   };
 
-  const copyKey = (value: string) => {
-    navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyKey = async (value: string) => {
+    if (await copyText(value)) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const getKeyStatus = (key: any) => {

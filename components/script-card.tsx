@@ -6,6 +6,7 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { FileCode2, Shield, Copy, Trash2, Eye, EyeOff, Gamepad2, Pencil, X, Plus, Check, Loader2 } from 'lucide-react';
+import { copyText } from '@/lib/clipboard';
 
 interface ScriptCardProps {
   script: {
@@ -40,7 +41,7 @@ export function ScriptCard({ script, onDelete, onTogglePublish, onUpdateGames, b
   const [savingGames, setSavingGames] = useState(false);
 
   const copyLoadstring = () => {
-    if (loadstring) navigator.clipboard.writeText(loadstring);
+    if (loadstring) copyText(loadstring);
   };
 
   const addGame = () => {

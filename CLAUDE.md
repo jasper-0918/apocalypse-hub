@@ -269,6 +269,9 @@ Bulk-import ScriptBlox scripts (bypasses the serverless time limit) with
 - **Pushing to `main` deploys to prod** — confirm before pushing.
 - **The chatbot is text-only** — it has no DB/tool access; keep it that way so a
   jailbreak can't affect the site.
+- **Copy to clipboard via `copyText()` (`lib/clipboard.ts`)**, not
+  `navigator.clipboard` directly — it falls back for insecure contexts/older
+  browsers and returns success so UI shows "Copied!" only when it truly copied.
 
 ---
 

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { copyText } from '@/lib/clipboard';
 import { ThumbnailFallback } from '@/components/script-hub-card';
 import { isFamousGame } from '@/lib/games';
 import { Lock, Loader2, CheckCircle, Copy, ArrowLeft, Plus, X, Gamepad2, ImagePlus, Trash2 } from 'lucide-react';
@@ -324,7 +325,7 @@ export default function UploadScriptPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigator.clipboard.writeText(result.loadstring!)}
+              onClick={() => copyText(result.loadstring!)}
               className="mt-3 text-muted-foreground"
             >
               <Copy className="mr-1.5 h-3.5 w-3.5" />
