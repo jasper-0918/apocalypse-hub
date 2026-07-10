@@ -147,6 +147,8 @@ scripts/                 one-off node tooling (sync-scriptblox.mjs bulk importer
   `history.replaceState`), so searches are shareable and back the `SearchAction`.
 - `lib/indexnow.ts` — `pingIndexNow()`; key file at
   `public/apocd879a9e5cadf4f4984b64663d5bc507c2bc05373.txt`.
+- `app/not-found.tsx` — branded 404 (correct HTTP 404, not a soft-404) that
+  routes visitors back to Home/Trending/Discover; shown for any `notFound()`.
 
 ### 4.8 Cron jobs
 - `vercel.json` schedules `app/api/cron/import-scriptblox` daily (06:00 UTC).
