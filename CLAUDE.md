@@ -120,16 +120,34 @@ scripts/                 one-off node tooling (sync-scriptblox.mjs bulk importer
 - `app/api/discover/route.ts` + `app/discover/page.tsx` = the imported catalog,
   filtered by `external_source='scriptblox'`, rendered with the normal card.
 
-### 4.6 Chatbot assistant  ← **added this phase**
+### 4.6 Chatbot assistant
 - `components/chat-widget.tsx` — floating widget mounted in `app/layout.tsx`
   (every page). Text-only; script/link results come from server logic, not the model.
+  Header has a **persona picker** (tone) persisted to `localStorage` (`ah_persona`).
 - `app/api/assistant/route.ts` — rule-based knowledge base + live catalog search;
-  on a KB miss it can **web-search** (Tavily) and cite sources.
-- `lib/assistant.ts` — KB, intent matching, `SYSTEM_PROMPT` / `WEB_SYSTEM_PROMPT`
-  (jailbreak/off-topic/malware/secret-leak guardrails), shared `ScriptHit` type.
+  on a KB miss it answers general/coding/news questions, **web-searching** (Tavily)
+  for anything time-sensitive and citing sources.
+- `lib/assistant.ts` — KB, intent matching, shared `ScriptHit` type, and the
+  chatbot's **personality + safety** system (see below).
 - `lib/llm.ts` — multi-provider LLM client (Groq/Cerebras/OpenRouter/Anthropic),
   provider fallback + key rotation. `lib/tavily.ts` — web search. Both use
   `lib/provider-keys.ts` (`readEnvKeys`, `shuffle`).
+
+**Personas & guardrails (security-sensitive — keep the layering):**
+- **Persona is a validated enum** (`friendly|funny|sarcastic|professional`), never
+  free text. The client sends `persona: "..."`; the style wording lives server-side
+  in `PERSONA_STYLE` and is looked up by `isPersona()`. Never let user text become
+  system-prompt instructions.
+- `buildSystemPrompt(persona, mode)` composes: identity → capabilities → grounding
+  (`app` KB facts / `web` results) → tone → **`SAFETY_RULES` last**. Safety is stated
+  to override tone, so no persona can loosen it.
+- **Two guardrail layers:** (1) `screenUserMessage()` deterministically hard-blocks
+  clearly malicious/compromising prompts (prompt-injection, secret/DB exfiltration,
+  malware, attacks, key-system/obfuscation bypass) **before** any LLM call — patterns
+  are multi-word/high-precision so legit script questions ("blox fruits hacks",
+  "aimbot script") are NOT blocked; (2) the system-prompt `SAFETY_RULES` catch softer
+  attacks the regex misses. When adding block patterns, re-check for false positives
+  against normal script/exploit questions (that's the product).
 
 ### 4.7 SEO / traffic
 - `app/sitemap.ts` (paginated — lists **all** scripts), `app/robots.ts`,

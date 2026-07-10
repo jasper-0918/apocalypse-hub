@@ -2,10 +2,20 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { MessageCircle, X, Send, Loader2, ExternalLink, Eye } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, ExternalLink, Eye, ChevronDown, Check } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { formatCount } from '@/lib/utils';
-import { GREETING, ASSISTANT_NAME, DEFAULT_SUGGESTIONS, type AssistantLink, type ScriptHit } from '@/lib/assistant';
+import {
+  GREETING,
+  ASSISTANT_NAME,
+  DEFAULT_SUGGESTIONS,
+  PERSONAS,
+  DEFAULT_PERSONA,
+  isPersona,
+  type Persona,
+  type AssistantLink,
+  type ScriptHit,
+} from '@/lib/assistant';
 
 interface Msg {
   role: 'user' | 'assistant';
@@ -22,7 +32,23 @@ export function ChatWidget() {
   const [messages, setMessages] = useState<Msg[]>([INITIAL]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [persona, setPersona] = useState<Persona>(DEFAULT_PERSONA);
+  const [personaOpen, setPersonaOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Restore the user's saved tone.
+  useEffect(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('ah_persona') : null;
+    if (isPersona(saved)) setPersona(saved);
+  }, []);
+
+  const choosePersona = (p: Persona) => {
+    setPersona(p);
+    setPersonaOpen(false);
+    if (typeof window !== 'undefined') localStorage.setItem('ah_persona', p);
+  };
+
+  const activePersona = PERSONAS.find((p) => p.id === persona) || PERSONAS[0];
 
   useEffect(() => {
     if (open) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -42,6 +68,7 @@ export function ChatWidget() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
+          persona,
         }),
       });
       const data = await res.json();
@@ -91,13 +118,56 @@ export function ChatWidget() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => setOpen(false)}
-              aria-label="Close assistant"
-              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              {/* Persona / tone picker */}
+              <div className="relative">
+                <button
+                  onClick={() => setPersonaOpen((v) => !v)}
+                  aria-haspopup="menu"
+                  aria-expanded={personaOpen}
+                  aria-label={`Assistant tone: ${activePersona.label}. Change tone`}
+                  title="Change the assistant's tone"
+                  className="flex items-center gap-1 rounded-full border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-red-900/40 hover:text-foreground"
+                >
+                  <span aria-hidden="true">{activePersona.emoji}</span>
+                  <span>{activePersona.label}</span>
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+                {personaOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 z-10 mt-1 w-48 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
+                  >
+                    <p className="border-b border-border px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                      Assistant tone
+                    </p>
+                    {PERSONAS.map((p) => (
+                      <button
+                        key={p.id}
+                        role="menuitemradio"
+                        aria-checked={p.id === persona}
+                        onClick={() => choosePersona(p.id)}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-secondary"
+                      >
+                        <span aria-hidden="true" className="text-base">{p.emoji}</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-medium">{p.label}</span>
+                          <span className="block truncate text-xs text-muted-foreground">{p.blurb}</span>
+                        </span>
+                        {p.id === persona && <Check className="h-3.5 w-3.5 shrink-0 text-red-400" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => setOpen(false)}
+                aria-label="Close assistant"
+                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
           {/* Messages */}

@@ -9,8 +9,10 @@ import {
   matchKb,
   detectSearchQuery,
   DEFAULT_SUGGESTIONS,
-  SYSTEM_PROMPT,
-  WEB_SYSTEM_PROMPT,
+  DEFAULT_PERSONA,
+  buildSystemPrompt,
+  isPersona,
+  screenUserMessage,
   type ChatMessage,
   type AssistantLink,
   type ScriptHit,
@@ -72,10 +74,21 @@ export async function POST(req: NextRequest) {
         .slice(-10)
     : [];
 
+  // Persona is a validated enum, never free text — the style text lives on the
+  // server, so it can't be used to inject instructions into the system prompt.
+  const persona = isPersona(body.persona) ? body.persona : DEFAULT_PERSONA;
+
   const lastUser = [...messages].reverse().find((m) => m.role === 'user');
   const question = lastUser?.content?.trim() || '';
   if (!question) {
     return NextResponse.json({ reply: "What can I help you with?", suggestions: DEFAULT_SUGGESTIONS });
+  }
+
+  // Deterministic guardrail: hard-block clearly malicious / system-compromising
+  // requests before spending an LLM call, so the refusal can't be talked around.
+  const screen = screenUserMessage(question);
+  if (screen.blocked) {
+    return NextResponse.json({ reply: screen.reply, links: [] });
   }
 
   let links: AssistantLink[] = [];
@@ -121,8 +134,11 @@ export async function POST(req: NextRequest) {
             .map((r, i) => `[${i + 1}] ${r.title} — ${r.url}\n${r.content.slice(0, 350)}`)
             .join('\n\n');
       } else {
+        // No KB match and no web results: let the LLM answer from its own
+        // knowledge (general/coding questions) under the safety-bounded prompt.
+        // This canned line only shows if the LLM is unavailable.
         ruleReply =
-          "I can help with getting a key, using or uploading scripts, pricing, earnings, and account help. Try one of the suggestions below, or open a support ticket for anything else.";
+          "I can help with the hub (keys, scripts, uploading, pricing, earnings, accounts) and general questions like coding help or Roblox news. What would you like to know?";
         links = [
           { label: 'Get a key', href: '/get-key' },
           { label: 'Support', href: '/dashboard/support' },
@@ -134,7 +150,7 @@ export async function POST(req: NextRequest) {
   // Prefer a natural LLM reply when a provider is configured; otherwise fall
   // back to the deterministic KB/search/web text. The LLM only writes prose —
   // the links and script results always come from our own server logic.
-  const base = useWebPrompt ? WEB_SYSTEM_PROMPT : SYSTEM_PROMPT;
+  const base = buildSystemPrompt(persona, useWebPrompt ? 'web' : 'app');
   const system = grounding ? `${base}\n\nContext for this turn: ${grounding}` : base;
   const aiReply = await generateReply(
     system,
