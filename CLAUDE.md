@@ -192,6 +192,8 @@ scripts/                 one-off node tooling (sync-scriptblox.mjs bulk importer
   - `023` created `external_scripts` (now **unused/legacy**).
   - `024` added `scripts.external_source` / `external_id` (import dedup).
   - `025` (optional) drops the dead `external_scripts` table.
+  - `026` adds partial/composite indexes for the catalog & discover
+    filter+sort paths (pure optimization, additive — safe to apply live).
 - **Big tables use `lib/paginate.ts` `selectAll()`** — PostgREST caps a single
   SELECT at ~1000 rows, so sitemap / My Scripts / earnings / catalog page through.
 - **Public read APIs are edge-cached** via `lib/http.ts` `cachedJson()` — sets
