@@ -141,9 +141,14 @@ scripts/                 one-off node tooling (sync-scriptblox.mjs bulk importer
   `script/[slug]` emits `SoftwareApplication` (incl. an honest
   `interactionStatistic` view count — never fabricated ratings) + `BreadcrumbList`;
   each `game/[slug]` emits `CollectionPage`/`ItemList`.
-- **Per-page metadata:** server pages use `generateMetadata`. Client-only pages
-  (`/trending`, `/discover`) carry SEO via a sibling `layout.tsx` `metadata` export
-  — replicate this pattern for any new `'use client'` route that needs indexing.
+- **Per-page metadata:** server pages use `generateMetadata`. Pages whose *body*
+  is a client component (`/trending`, `/discover`) carry SEO via a sibling
+  `layout.tsx` `metadata` export — replicate that for any new `'use client'` route.
+- **Every public listing page server-renders its grid** (Home, `/trending`,
+  `/discover`, `/game/[slug]`), so `/script/<slug>` links are in the HTML.
+  `/trending` is a pure server component; Home and `/discover` are server pages
+  that pass initial data to `home-client.tsx` / `discover-client.tsx`, which seed
+  state from the props and **skip their first fetch** unless a URL query is set.
 - **Homepage search is URL-synced** (`?search=` ↔ debounced input via
   `history.replaceState`), so searches are shareable and back the `SearchAction`.
 - **Loading uses skeleton grids, not spinners** — `ScriptGridSkeleton` /
@@ -275,6 +280,10 @@ Bulk-import ScriptBlox scripts (bypasses the serverless time limit) with
 - **Service role bypasses RLS.** Server routes use `createServerClient()` (service
   key) and enforce auth/authorization in code (`getUserFromRequest` + role checks).
 - **1000-row PostgREST cap** — use `selectAll()` when you truly need every row.
+- **Don't import a plain value out of a `'use client'` module from a server
+  component** — you get a client-reference proxy, not the value (e.g. a page-size
+  number silently becomes `NaN` in a query). Shared constants go in a neutral
+  module like `lib/list-config.ts`.
 - **Never interpolate raw user input into a PostgREST `.or()`/filter string** —
   `,` `(` `)` are grammar tokens and `%`/`_` are LIKE wildcards. Run free-text
   through `sanitizeSearchTerm()` (`lib/utils.ts`) first, as the search endpoints do.

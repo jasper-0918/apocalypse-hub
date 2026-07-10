@@ -1,24 +1,18 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SiteHeader } from '@/components/site-header';
-import { ScriptHubCard, HubScript, ScriptGridSkeleton } from '@/components/script-hub-card';
+import { ScriptHubCard } from '@/components/script-hub-card';
 import { TrendingUp, Eye } from 'lucide-react';
-import Link from 'next/link';
+import { getTrendingScripts } from '@/lib/scripts-server';
 
-export default function TrendingPage() {
-  const [scripts, setScripts] = useState<HubScript[]>([]);
-  const [loading, setLoading] = useState(true);
+// Fully server-rendered: this page has no interactivity, it just lists the
+// most-viewed scripts. Rendering it on the server puts real /script/<slug>
+// links in the HTML and removes the fetch-on-mount + loading flash.
+export const revalidate = 300;
 
-  useEffect(() => {
-    fetch('/api/scripts/catalog?sort=trending&limit=40')
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: HubScript[]) => setScripts(data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+export default async function TrendingPage() {
+  const scripts = await getTrendingScripts(40);
 
   return (
     <div className="min-h-screen bg-background">
@@ -31,9 +25,7 @@ export default function TrendingPage() {
         </div>
         <p className="text-muted-foreground mb-6">The most-viewed scripts on Apocalypse Blox Hub right now.</p>
 
-        {loading ? (
-          <ScriptGridSkeleton count={8} />
-        ) : scripts.length === 0 ? (
+        {scripts.length === 0 ? (
           <Card className="bg-card border-border">
             <CardContent className="flex flex-col items-center justify-center py-20 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary mb-4">

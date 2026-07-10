@@ -152,16 +152,14 @@ export const getRecentScripts = cache(async (limit = 100): Promise<HubScript[]> 
   }
 });
 
-// Most-viewed imported scripts. Mirrors GET /api/discover?sort=popular.
-// Degrades to [] if migration 024 (external_source) hasn't been applied.
-export const getPopularImported = cache(async (limit = 8): Promise<HubScript[]> => {
+// Most-viewed published scripts. Mirrors GET /api/scripts/catalog?sort=trending.
+export const getTrendingScripts = cache(async (limit = 40): Promise<HubScript[]> => {
   const supabase = createServerClient();
   try {
     const { data, error } = await supabase
       .from('scripts')
       .select(CATALOG_RICH)
       .eq('is_published', true)
-      .eq('external_source', IMPORT_SOURCE)
       .order('view_count', { ascending: false })
       .limit(limit);
     if (error) throw error;
@@ -169,6 +167,35 @@ export const getPopularImported = cache(async (limit = 8): Promise<HubScript[]> 
   } catch {
     return [];
   }
+});
+
+// First page of the imported catalog (popular, no query) plus the exact total,
+// so /discover can server-render its default view. Mirrors GET /api/discover.
+// Degrades to empty if migration 024 (external_source) hasn't been applied.
+export const getDiscoverInitial = cache(
+  async (limit = 48): Promise<{ scripts: HubScript[]; total: number }> => {
+    const supabase = createServerClient();
+    try {
+      const { data, error, count } = await supabase
+        .from('scripts')
+        .select(CATALOG_RICH, { count: 'exact' })
+        .eq('is_published', true)
+        .eq('external_source', IMPORT_SOURCE)
+        .order('view_count', { ascending: false })
+        .range(0, limit - 1);
+      if (error) throw error;
+      const scripts = (data || []).map(toHubScript);
+      return { scripts, total: count ?? scripts.length };
+    } catch {
+      return { scripts: [], total: 0 };
+    }
+  }
+);
+
+// The homepage's "Trending Across the Community" strip — same query, no total.
+export const getPopularImported = cache(async (limit = 8): Promise<HubScript[]> => {
+  const { scripts } = await getDiscoverInitial(limit);
+  return scripts;
 });
 
 export interface GameSummary {
