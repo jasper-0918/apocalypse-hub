@@ -84,6 +84,12 @@ export default async function ScriptPage({ params }: { params: { slug: string } 
           dateModified: script.updated_at,
           author: { '@type': 'Person', name: script.owner_username },
           offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+          // Honest engagement signal (real view count) — no fabricated ratings.
+          interactionStatistic: {
+            '@type': 'InteractionCounter',
+            interactionType: 'https://schema.org/ViewAction',
+            userInteractionCount: Math.max(0, script.view_count || 0),
+          },
         },
         {
           '@context': 'https://schema.org',

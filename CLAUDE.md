@@ -1,8 +1,10 @@
-# Apocalypse Blox Hub — Project Guide
+# CLAUDE.md
 
-Canonical guide for anyone (human or AI agent) picking up this project. Read this
-first, then dip into the referenced files. Keep it up to date when you change a
-system.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+Apocalypse Blox Hub — canonical guide for anyone (human or AI agent) picking up
+this project. Read this first, then dip into the referenced files. Keep it current
+when you change a system.
 
 ---
 
@@ -133,6 +135,16 @@ scripts/                 one-off node tooling (sync-scriptblox.mjs bulk importer
 - `app/sitemap.ts` (paginated — lists **all** scripts), `app/robots.ts`,
   `app/api/og/route.tsx` (dynamic OG images), root metadata + JSON-LD in
   `app/layout.tsx`, `lib/seo.ts` (`SITE_URL`, `SITE_NAME`, …).
+- **Structured data (JSON-LD):** root `Organization` + `WebSite` (with a
+  `SearchAction` sitelinks searchbox pointing at `/?search={term}`); each
+  `script/[slug]` emits `SoftwareApplication` (incl. an honest
+  `interactionStatistic` view count — never fabricated ratings) + `BreadcrumbList`;
+  each `game/[slug]` emits `CollectionPage`/`ItemList`.
+- **Per-page metadata:** server pages use `generateMetadata`. Client-only pages
+  (`/trending`, `/discover`) carry SEO via a sibling `layout.tsx` `metadata` export
+  — replicate this pattern for any new `'use client'` route that needs indexing.
+- **Homepage search is URL-synced** (`?search=` ↔ debounced input via
+  `history.replaceState`), so searches are shareable and back the `SearchAction`.
 - `lib/indexnow.ts` — `pingIndexNow()`; key file at
   `public/apocd879a9e5cadf4f4984b64663d5bc507c2bc05373.txt`.
 
@@ -208,11 +220,15 @@ npm install
 npm run dev         # local dev server (port 3000)
 npm run typecheck   # tsc --noEmit  — run before committing
 npm run build       # full production build — run before committing
-npm run lint
+npm run lint        # eslint (next lint)
 ```
 
-Verify user-facing changes in a browser (the app talks to the **production**
-Supabase via `.env`). Bulk-import ScriptBlox scripts with
+**There is no automated test suite** (no test runner is configured). The
+verification loop is: `npm run typecheck` + `npm run build`, then **drive the
+affected flow in a browser** (the local dev app talks to the **production**
+Supabase via `.env`, so real data is live — be careful with destructive actions).
+
+Bulk-import ScriptBlox scripts (bypasses the serverless time limit) with
 `node scripts/sync-scriptblox.mjs [popularPages] [latestPages] [ownerEmail]`.
 
 ---

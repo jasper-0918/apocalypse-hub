@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    },
+    {
       "name": "apoc-docs",
       "runtimeExecutable": "C:\\Users\\jaspe\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
       "runtimeArgs": ["-m", "http.server", "4321", "--directory", "Apocalypse Hub"],

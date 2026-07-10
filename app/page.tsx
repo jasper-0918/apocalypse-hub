@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -33,17 +33,48 @@ export default function HomePage() {
   const [scripts, setScripts] = useState<HubScript[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debounced, setDebounced] = useState('');
   const [sort, setSort] = useState<'recent' | 'trending'>('recent');
+  const debTimer = useRef<ReturnType<typeof setTimeout>>();
   const [games, setGames] = useState<GameLink[]>([]);
   const [showAllGames, setShowAllGames] = useState(false);
   const [discover, setDiscover] = useState<HubScript[]>([]);
+
+  // Read an initial query from the URL (?search=…) so shared/sitelinks-search
+  // links land pre-filled. Runs once; SSR renders empty to avoid a mismatch.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const q = new URLSearchParams(window.location.search).get('search') || '';
+    if (q) {
+      setSearch(q);
+      setDebounced(q);
+    }
+  }, []);
+
+  // Debounce keystrokes into `debounced` and mirror the query into the URL so
+  // searches are shareable/bookmarkable without spamming the catalog API.
+  useEffect(() => {
+    if (debTimer.current) clearTimeout(debTimer.current);
+    debTimer.current = setTimeout(() => {
+      setDebounced(search);
+      if (typeof window !== 'undefined') {
+        const usp = new URLSearchParams(window.location.search);
+        search ? usp.set('search', search) : usp.delete('search');
+        const qs = usp.toString();
+        window.history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : ''));
+      }
+    }, 300);
+    return () => {
+      if (debTimer.current) clearTimeout(debTimer.current);
+    };
+  }, [search]);
 
   useEffect(() => {
     const fetchScripts = async () => {
       setLoading(true);
       try {
         const params = new URLSearchParams();
-        if (search) params.set('search', search);
+        if (debounced) params.set('search', debounced);
         if (sort === 'trending') params.set('sort', 'trending');
         const res = await fetch(`/api/scripts/catalog?${params}`);
         if (res.ok) setScripts(await res.json());
@@ -53,7 +84,7 @@ export default function HomePage() {
       setLoading(false);
     };
     fetchScripts();
-  }, [search, sort]);
+  }, [debounced, sort]);
 
   useEffect(() => {
     fetch('/api/scripts/games')

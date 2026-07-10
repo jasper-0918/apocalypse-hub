@@ -76,6 +76,15 @@ const siteJsonLd = {
       name: SITE_NAME,
       description: SITE_DESCRIPTION,
       publisher: { '@id': `${SITE_URL}/#organization` },
+      // Enables Google's sitelinks search box. The homepage reads ?search=.
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${SITE_URL}/?search={search_term_string}`,
+        },
+        'query-input': 'required name=search_term_string',
+      },
     },
   ],
 };
