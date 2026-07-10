@@ -242,6 +242,12 @@ scripts/                 one-off node tooling (sync-scriptblox.mjs bulk importer
   `generateStaticParams` export Next renders the route purely dynamically and
   never caches it. Their server render must stay side-effect free — view counts
   are incremented by the client's `/api/scripts/public/[slug]` call, not the page.
+- **Linking keys ↔ scripts:** free keys are universal (a key authorizes every
+  published script via `script_keys`, read by the serve gate). To sync that table
+  use `lib/keys.ts` `linkKeyToPublishedScripts()` (on key claim) /
+  `linkScriptToActiveKeys()` (on publish) — they page past the 1000-row cap and
+  bulk-upsert. **Never** loop one insert per script or use an uncapped select
+  (the old code did both: it missed scripts past row 1000 and caused a write storm).
 - **Public read APIs are edge-cached** via `lib/http.ts` `cachedJson()` — sets
   `s-maxage`+`stale-while-revalidate` (never `max-age`), so Vercel's CDN serves
   repeat hits without touching Supabase. Applied to `/api/scripts/catalog`,
@@ -326,6 +332,9 @@ Bulk-import ScriptBlox scripts (bypasses the serverless time limit) with
 
 ## 10. Related docs
 
+- `LAUNCH.md` — **launch & handoff runbook** (go-live checklist, operator tasks,
+  smoke tests, rollback, security checklist, scaling notes). Read it before launch.
 - `.env.example` — every env var.
 - `supabase/migrations/` — the schema, in order.
 - Product/user docs are served at `/docs` (see `public/docs`).
+- `README.md` — public entry point / quickstart.

@@ -5,7 +5,8 @@ script obfuscation and creator earnings. Built with Next.js 13 (App Router) +
 Supabase, deployed on Vercel.
 
 - **Live:** https://apocalypsebloxhub.vercel.app
-- **Full docs / architecture / handoff guide:** [`CLAUDE.md`](./CLAUDE.md)
+- **Architecture / systems / conventions:** [`CLAUDE.md`](./CLAUDE.md)
+- **Launch & operator runbook:** [`LAUNCH.md`](./LAUNCH.md)
 
 ## Quickstart
 
