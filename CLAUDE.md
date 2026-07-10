@@ -197,6 +197,11 @@ scripts/                 one-off node tooling (sync-scriptblox.mjs bulk importer
     filter+sort paths (pure optimization, additive — safe to apply live).
 - **Big tables use `lib/paginate.ts` `selectAll()`** — PostgREST caps a single
   SELECT at ~1000 rows, so sitemap / My Scripts / earnings / catalog page through.
+- **`/script/[slug]` and `/game/[slug]` are ISR** (`revalidate = 300` +
+  `generateStaticParams() => []`). The empty array is load-bearing: without a
+  `generateStaticParams` export Next renders the route purely dynamically and
+  never caches it. Their server render must stay side-effect free — view counts
+  are incremented by the client's `/api/scripts/public/[slug]` call, not the page.
 - **Public read APIs are edge-cached** via `lib/http.ts` `cachedJson()` — sets
   `s-maxage`+`stale-while-revalidate` (never `max-age`), so Vercel's CDN serves
   repeat hits without touching Supabase. Applied to `/api/scripts/catalog`,

@@ -4,7 +4,19 @@ import { SITE_URL, SITE_NAME } from '@/lib/seo';
 import { slugify } from '@/lib/utils';
 import { ScriptDetailClient, EMPTY_REACTIONS, ScriptDetail } from './script-detail-client';
 
-export const dynamic = 'force-dynamic';
+// ISR, not force-dynamic: this page's server render is side-effect free (see
+// getPublicScript — it never increments views; the client's call to
+// /api/scripts/public/[slug] does that on every visit). Caching the HTML for a
+// few minutes cuts TTFB on our most-indexed pages and spares Supabase a query
+// per visitor. Fresh data still lands client-side immediately after hydration.
+export const revalidate = 300;
+
+// Prerender nothing at build (keeps builds fast with 1000+ scripts); every slug
+// is generated on first request and then served from the cache until revalidate.
+// Omitting this entirely would make the route purely dynamic (never cached).
+export function generateStaticParams() {
+  return [];
+}
 
 function metaDescription(name: string, game: string, description: string): string {
   const gameLabel = game && game !== 'Universal' ? ` for ${game}` : '';

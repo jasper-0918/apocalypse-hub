@@ -7,7 +7,15 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { getScriptsByGameSlug } from '@/lib/scripts-server';
 import { SITE_URL, SITE_NAME } from '@/lib/seo';
 
-export const dynamic = 'force-dynamic';
+// ISR, not force-dynamic — the game listing is public, read-only data. New
+// imports appear within the revalidate window.
+export const revalidate = 300;
+
+// Generate each game page on first request, then serve it cached (see the
+// script page for why the empty array matters).
+export function generateStaticParams() {
+  return [];
+}
 
 function ogFor(name: string): string {
   return `/api/og?title=${encodeURIComponent(`${name} Scripts`)}&subtitle=${encodeURIComponent(
