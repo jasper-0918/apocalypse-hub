@@ -257,6 +257,9 @@ Bulk-import ScriptBlox scripts (bypasses the serverless time limit) with
 - **Service role bypasses RLS.** Server routes use `createServerClient()` (service
   key) and enforce auth/authorization in code (`getUserFromRequest` + role checks).
 - **1000-row PostgREST cap** — use `selectAll()` when you truly need every row.
+- **Never interpolate raw user input into a PostgREST `.or()`/filter string** —
+  `,` `(` `)` are grammar tokens and `%`/`_` are LIKE wildcards. Run free-text
+  through `sanitizeSearchTerm()` (`lib/utils.ts`) first, as the search endpoints do.
 - **TS < ES2015** — `Array.from()`, not spread, over Map/Set.
 - **Don't commit `.env`.** Keep secrets in env only; the assistant/LLM keys are
   read server-side and never sent to the browser.

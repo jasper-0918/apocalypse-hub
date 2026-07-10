@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { IMPORT_SOURCE } from '@/lib/import-scripts';
 import { cachedJson } from '@/lib/http';
+import { sanitizeSearchTerm } from '@/lib/utils';
 
 // Public: the imported community catalog (scripts brought in from ScriptBlox).
 // These are real, published, key-gated scripts, so cards link to /script/<slug>
@@ -10,7 +11,7 @@ import { cachedJson } from '@/lib/http';
 export async function GET(req: NextRequest) {
   const supabase = createServerClient();
   const sort = req.nextUrl.searchParams.get('sort') === 'latest' ? 'latest' : 'popular';
-  const search = req.nextUrl.searchParams.get('search')?.trim();
+  const search = sanitizeSearchTerm(req.nextUrl.searchParams.get('search') || '');
   const limit = Math.min(Math.max(Number(req.nextUrl.searchParams.get('limit')) || 40, 1), 60);
   const page = Math.max(Number(req.nextUrl.searchParams.get('page')) || 1, 1);
   const from = (page - 1) * limit;

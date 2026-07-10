@@ -48,6 +48,23 @@ export function siteBaseUrl(): string {
   return '';
 }
 
+/**
+ * Make free-text safe to embed inside a PostgREST `.or(...)` filter string.
+ * In that grammar a comma separates conditions and parentheses group them, so
+ * raw input like `a,b` or `a)` would break out of the intended `ilike` value
+ * and could inject extra filters. We also strip the LIKE wildcards `%`/`_` (and
+ * the escape `\`) so a user can't turn their term into a match-everything
+ * pattern, and cap the length. Callers still wrap the result as `%term%`.
+ */
+export function sanitizeSearchTerm(term: string, max = 80): string {
+  return (term || '')
+    .slice(0, max)
+    .replace(/[,()]/g, ' ')
+    .replace(/[%_\\"']/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 /** Compact view counts: 24, 3.1k, 1.7M — like ScriptBlox. */
 export function formatCount(n: number): string {
   if (n < 1000) return String(n);

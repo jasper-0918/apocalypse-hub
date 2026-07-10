@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
+import { sanitizeSearchTerm } from '@/lib/utils';
 import { getClientIp, rateLimit, tooManyRequests } from '@/lib/rate-limit';
 import { generateReply } from '@/lib/llm';
 import { webSearch, isWebSearchConfigured } from '@/lib/tavily';
@@ -28,7 +29,9 @@ type Hit = ScriptHit;
 // Find matching published scripts in the catalog (includes imported ones).
 async function searchScripts(query: string): Promise<Hit[]> {
   const supabase = createServerClient();
-  const like = `%${query}%`;
+  const term = sanitizeSearchTerm(query);
+  if (!term) return [];
+  const like = `%${term}%`;
   const hits: Hit[] = [];
 
   try {

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { cachedJson } from '@/lib/http';
+import { sanitizeSearchTerm } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ const LEGACY_COLUMNS =
 export async function GET(req: NextRequest) {
   const supabase = createServerClient();
   const game = req.nextUrl.searchParams.get('game');
-  const search = req.nextUrl.searchParams.get('search');
+  const search = sanitizeSearchTerm(req.nextUrl.searchParams.get('search') || '');
   const sort = req.nextUrl.searchParams.get('sort'); // 'trending' | 'recent' (default)
   const limitParam = Number(req.nextUrl.searchParams.get('limit')) || 100;
 
