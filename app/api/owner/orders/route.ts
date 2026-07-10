@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
+import { selectAll } from '@/lib/paginate';
 
 function isStaff(role?: string) {
   return role === 'OWNER' || role === 'ADMIN';
@@ -15,11 +16,13 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = createServerClient();
-  const { data } = await supabase
-    .from('payment_orders')
-    .select('*, users(username, email)')
-    .order('created_at', { ascending: false })
-    .limit(200);
+  const data = await selectAll((from, to) =>
+    supabase
+      .from('payment_orders')
+      .select('*, users(username, email)')
+      .order('created_at', { ascending: false })
+      .range(from, to)
+  );
 
   const formatted = (data ?? []).map((o: any) => ({
     ...o,

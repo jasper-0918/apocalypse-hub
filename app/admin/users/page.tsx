@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Search, Shield, Trash2, Send } from 'lucide-react';
 import { useListSearch } from '@/hooks/use-list-search';
 import { ListPager } from '@/components/list-pager';
+import { ExportCsvButton } from '@/components/export-csv-button';
 
 export default function AdminUsersPage() {
   const { user: me } = useAuth();
@@ -141,8 +142,8 @@ export default function AdminUsersPage() {
     <div className="p-8 max-w-6xl">
       <h1 className="text-3xl font-bold text-foreground mb-8">User Management</h1>
 
-      <div className="mb-6">
-        <div className="relative max-w-md">
+      <div className="mb-6 flex items-center justify-between gap-3 flex-wrap">
+        <div className="relative w-full max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={search}
@@ -151,6 +152,18 @@ export default function AdminUsersPage() {
             className="pl-9 bg-secondary border-border"
           />
         </div>
+        <ExportCsvButton
+          filename="users"
+          rows={users}
+          columns={[
+            { header: 'Username', value: (u: any) => u.username },
+            { header: 'Email', value: (u: any) => u.email },
+            { header: 'Plan', value: (u: any) => u.plan },
+            { header: 'Role', value: (u: any) => u.role },
+            { header: 'Verified', value: (u: any) => (u.email_verified === false ? 'no' : 'yes') },
+            { header: 'Joined', value: (u: any) => new Date(u.created_at).toISOString() },
+          ]}
+        />
       </div>
 
       {notice && (

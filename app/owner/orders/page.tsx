@@ -4,7 +4,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Check, X, Wallet, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Loader2, Check, X, Wallet, ArrowDownToLine, ArrowUpFromLine, Search } from 'lucide-react';
+import { useListSearch } from '@/hooks/use-list-search';
+import { ListPager } from '@/components/list-pager';
+import { ExportCsvButton } from '@/components/export-csv-button';
 
 interface Order {
   id: string;
@@ -73,13 +77,49 @@ export default function OwnerPaymentsPage() {
   const pendingPayouts = payouts.filter((p) => p.status === 'pending');
 
   return (
-    <div className="p-8 max-w-4xl ml-60">
-      <div className="mb-6 flex items-center gap-3">
-        <Wallet className="h-7 w-7 text-amber-400" />
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Payments</h1>
-          <p className="text-muted-foreground">Approve incoming plan payments and outgoing creator payouts.</p>
+    <div className="p-8 max-w-4xl">
+      <div className="mb-6 flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <Wallet className="h-7 w-7 text-amber-400" />
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Payments</h1>
+            <p className="text-muted-foreground">Approve incoming plan payments and outgoing creator payouts.</p>
+          </div>
         </div>
+        {tab === 'incoming' ? (
+          <ExportCsvButton
+            filename="plan-payments"
+            rows={orders}
+            columns={[
+              { header: 'User', value: (o) => o.username },
+              { header: 'Email', value: (o) => o.email },
+              { header: 'Item', value: (o) => o.label },
+              { header: 'Amount USD', value: (o) => Number(o.amount_usd).toFixed(2) },
+              { header: 'Method', value: (o) => o.method },
+              { header: 'Reference', value: (o) => o.reference },
+              { header: 'Note', value: (o) => o.note || '' },
+              { header: 'Status', value: (o) => o.status },
+              { header: 'Created', value: (o) => new Date(o.created_at).toISOString() },
+            ]}
+          />
+        ) : (
+          <ExportCsvButton
+            filename="creator-payouts"
+            rows={payouts}
+            columns={[
+              { header: 'User', value: (p) => p.username },
+              { header: 'Email', value: (p) => p.email },
+              { header: 'Currency', value: (p) => p.currency },
+              { header: 'Amount USD', value: (p) => Number(p.amount_usd).toFixed(2) },
+              { header: 'Fee USD', value: (p) => Number(p.fee_usd).toFixed(2) },
+              { header: 'Net USD', value: (p) => Number(p.net_usd).toFixed(2) },
+              { header: 'Robux', value: (p) => p.robux_amount ?? '' },
+              { header: 'Destination', value: (p) => p.destination },
+              { header: 'Status', value: (p) => p.status },
+              { header: 'Created', value: (p) => new Date(p.created_at).toISOString() },
+            ]}
+          />
+        )}
       </div>
 
       {/* Tabs */}
@@ -170,14 +210,20 @@ function ApproveReject({ id, acting, onApprove, onReject, approveLabel = 'Approv
   );
 }
 
-function Section<T extends { id: string }>({ title, empty, items, renderItem, history, renderHistory }: {
+function Section<T extends { id: string; status: string; created_at: string }>({ title, empty, items, renderItem, history, renderHistory }: {
   title: string;
   empty: string;
   items: T[];
   renderItem: (item: T) => React.ReactNode;
-  history: (T & { status: string; created_at: string })[];
+  history: T[];
   renderHistory: (item: T) => string;
 }) {
+  // Processed history grows over time — search + paginate it (page-local, no URL).
+  const hist = useListSearch(history, (h, q) => renderHistory(h).toLowerCase().includes(q), {
+    pageSize: 10,
+    syncUrl: false,
+  });
+
   return (
     <>
       <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">{title} ({items.length})</h2>
@@ -186,12 +232,29 @@ function Section<T extends { id: string }>({ title, empty, items, renderItem, hi
       ) : (
         <div className="space-y-3 mb-8">{items.map(renderItem)}</div>
       )}
-      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">History</h2>
+
+      <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">History</h2>
+        {history.length > 0 && (
+          <div className="relative w-56">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={hist.search}
+              onChange={(e) => hist.setSearch(e.target.value)}
+              placeholder="Search history…"
+              className="pl-9 h-9 bg-secondary border-border"
+            />
+          </div>
+        )}
+      </div>
+
       {history.length === 0 ? (
         <p className="text-sm text-muted-foreground">No processed items yet.</p>
+      ) : hist.shown.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No matching records.</p>
       ) : (
         <div className="space-y-2">
-          {history.map((h) => (
+          {hist.shown.map((h) => (
             <div key={h.id} className="flex items-center justify-between py-2 border-b border-border text-sm">
               <span className="text-muted-foreground">{renderHistory(h)} · {new Date(h.created_at).toLocaleDateString()}</span>
               <Badge className={h.status === 'approved' || h.status === 'paid' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}>
@@ -201,6 +264,7 @@ function Section<T extends { id: string }>({ title, empty, items, renderItem, hi
           ))}
         </div>
       )}
+      {history.length > 0 && <ListPager {...hist} noun="records" scrollTop={false} />}
     </>
   );
 }

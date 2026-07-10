@@ -5,9 +5,12 @@ import { getToken } from '@/lib/session';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, MessageSquare, ChevronDown, ChevronUp, Send, UserCheck } from 'lucide-react';
+import { Loader2, MessageSquare, ChevronDown, ChevronUp, Send, UserCheck, Search } from 'lucide-react';
+import { useListSearch } from '@/hooks/use-list-search';
+import { ListPager } from '@/components/list-pager';
 
 interface Ticket {
   id: string;
@@ -54,6 +57,17 @@ export function SupportTicketsPanel() {
 
   useEffect(() => { load(statusFilter); }, [statusFilter]);
 
+  const list = useListSearch(
+    tickets,
+    (t, q) =>
+      (t.subject || '').toLowerCase().includes(q) ||
+      (t.username || '').toLowerCase().includes(q) ||
+      (t.email || '').toLowerCase().includes(q) ||
+      (t.message || '').toLowerCase().includes(q),
+    { pageSize: 10, syncUrl: false }
+  );
+  const { search, setSearch, shown } = list;
+
   const update = async (id: string, updates: Record<string, any>) => {
     setSaving(true);
     const res = await fetch(`/api/owner/support/${id}`, {
@@ -74,7 +88,7 @@ export function SupportTicketsPanel() {
 
   return (
     <div className="max-w-4xl">
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-44 bg-secondary border-border">
             <SelectValue />
@@ -87,6 +101,15 @@ export function SupportTicketsPanel() {
             <SelectItem value="closed">Closed</SelectItem>
           </SelectContent>
         </Select>
+        <div className="relative w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search subject, user, message…"
+            className="pl-9 bg-secondary border-border h-9"
+          />
+        </div>
         <span className="text-sm text-muted-foreground">{tickets.length} ticket{tickets.length !== 1 ? 's' : ''}</span>
       </div>
 
@@ -101,9 +124,12 @@ export function SupportTicketsPanel() {
             <p>No tickets found.</p>
           </CardContent>
         </Card>
+      ) : shown.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-8">No tickets match “{search}”.</p>
       ) : (
-        <div className="space-y-3">
-          {tickets.map((t) => (
+        <>
+          <div className="space-y-3">
+            {shown.map((t) => (
             <Card key={t.id} className="bg-card border-border">
               <CardContent className="p-0">
                 <button
@@ -195,8 +221,10 @@ export function SupportTicketsPanel() {
                 )}
               </CardContent>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+          <ListPager {...list} noun="tickets" scrollTop={false} />
+        </>
       )}
     </div>
   );

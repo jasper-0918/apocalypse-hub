@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
+import { selectAll } from '@/lib/paginate';
 
 export async function GET(req: NextRequest) {
   const user = await getUserFromRequest(req);
@@ -10,11 +11,14 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = createServerClient();
-  const { data: users } = await supabase
-    .from('users')
-    .select('id, username, email, plan, role, created_at')
-    .neq('plan', 'FREE')
-    .order('created_at', { ascending: false });
+  const users = await selectAll((from, to) =>
+    supabase
+      .from('users')
+      .select('id, username, email, plan, role, created_at')
+      .neq('plan', 'FREE')
+      .order('created_at', { ascending: false })
+      .range(from, to)
+  );
 
-  return NextResponse.json(users || []);
+  return NextResponse.json(users);
 }

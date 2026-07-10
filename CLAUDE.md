@@ -154,6 +154,15 @@ scripts/                 one-off node tooling (sync-scriptblox.mjs bulk importer
   `<ListPager compact />` (hide selector + jump for tight spaces).
 - `/discover` paginates **server-side** (the API returns `total`; the page owns
   `sort`/`q`/`page`/`size` URL state) and reuses `<ListPager>` for the footer.
+- Same treatment on the **owner** panel: Subscribers (search + pager + CSV),
+  Payments/Orders (paginated + searchable history, CSV per tab), and the shared
+  **Support tickets** panel (`components/support-tickets-panel.tsx`, used by owner
+  + admin — search + pager). Embedded/in-card lists pass `{ syncUrl: false }`.
+- **CSV export**: `lib/csv.ts` (`downloadCsv(filename, rows, columns)` — RFC-4180
+  escaping, UTF-8 BOM) + `components/export-csv-button.tsx`. Used on Subscribers,
+  Orders/Payouts, and admin Users.
+- List-backing APIs page past the 1000/200 caps with `selectAll` (owner
+  subscribers/orders/payouts/support, admin scripts).
 
 ---
 
