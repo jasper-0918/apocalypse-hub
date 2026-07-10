@@ -5,7 +5,7 @@ import { SiteHeader } from '@/components/site-header';
 import { ScriptHubCard } from '@/components/script-hub-card';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { getScriptsByGameSlug } from '@/lib/scripts-server';
-import { SITE_URL, SITE_NAME } from '@/lib/seo';
+import { SITE_URL, SITE_NAME, collectionPageJsonLd } from '@/lib/seo';
 
 // ISR, not force-dynamic — the game listing is public, read-only data. New
 // imports appear within the revalidate window.
@@ -69,22 +69,14 @@ export default async function GamePage({ params }: { params: { slug: string } })
   if (!data) notFound();
 
   const { name, scripts } = data;
-  const collectionJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
+
+  // Only CollectionPage/ItemList here — the <Breadcrumbs> below already emits
+  // the BreadcrumbList block (its default). Adding one here would duplicate it.
+  const collectionJsonLd = collectionPageJsonLd({
     name: `${name} Scripts`,
     url: `${SITE_URL}/game/${params.slug}`,
-    mainEntity: {
-      '@type': 'ItemList',
-      numberOfItems: scripts.length,
-      itemListElement: scripts.slice(0, 50).map((s, i) => ({
-        '@type': 'ListItem',
-        position: i + 1,
-        url: `${SITE_URL}/script/${s.slug}`,
-        name: s.name,
-      })),
-    },
-  };
+    items: scripts,
+  });
 
   return (
     <div className="min-h-screen bg-background">

@@ -152,6 +152,30 @@ export const getRecentScripts = cache(async (limit = 100): Promise<HubScript[]> 
   }
 });
 
+// Same-game scripts for the "More <game> scripts" strip on a script page.
+// Server-rendered, so each script page links onward into the catalog instead of
+// being a dead end for crawlers.
+export const getRelatedScripts = cache(
+  async (game: string, excludeId: string, limit = 8): Promise<HubScript[]> => {
+    if (!game) return [];
+    const supabase = createServerClient();
+    try {
+      const { data, error } = await supabase
+        .from('scripts')
+        .select(CATALOG_RICH)
+        .eq('is_published', true)
+        .ilike('game', game)
+        .neq('id', excludeId)
+        .order('view_count', { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data || []).map(toHubScript);
+    } catch {
+      return [];
+    }
+  }
+);
+
 // Most-viewed published scripts. Mirrors GET /api/scripts/catalog?sort=trending.
 export const getTrendingScripts = cache(async (limit = 40): Promise<HubScript[]> => {
   const supabase = createServerClient();

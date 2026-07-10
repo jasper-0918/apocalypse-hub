@@ -5,6 +5,7 @@ import { SiteHeader } from '@/components/site-header';
 import { ScriptHubCard } from '@/components/script-hub-card';
 import { TrendingUp, Eye } from 'lucide-react';
 import { getTrendingScripts } from '@/lib/scripts-server';
+import { SITE_URL, collectionPageJsonLd } from '@/lib/seo';
 
 // Fully server-rendered: this page has no interactivity, it just lists the
 // most-viewed scripts. Rendering it on the server puts real /script/<slug>
@@ -14,9 +15,20 @@ export const revalidate = 300;
 export default async function TrendingPage() {
   const scripts = await getTrendingScripts(40);
 
+  const jsonLd = collectionPageJsonLd({
+    name: 'Trending Roblox Scripts',
+    url: `${SITE_URL}/trending`,
+    description: 'The most-viewed Roblox scripts on Apocalypse Blox Hub right now.',
+    items: scripts,
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader active="/trending" />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       <section className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-2">

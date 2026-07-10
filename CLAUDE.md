@@ -137,10 +137,17 @@ scripts/                 one-off node tooling (sync-scriptblox.mjs bulk importer
   `app/layout.tsx`, `lib/seo.ts` (`SITE_URL`, `SITE_NAME`, …).
 - **Structured data (JSON-LD):** root `Organization` + `WebSite` (with a
   `SearchAction` sitelinks searchbox pointing at `/?search={term}`); the homepage
-  has a visible FAQ + `FAQPage`; each
-  `script/[slug]` emits `SoftwareApplication` (incl. an honest
-  `interactionStatistic` view count — never fabricated ratings) + `BreadcrumbList`;
-  each `game/[slug]` emits `CollectionPage`/`ItemList`.
+  has a visible FAQ + `FAQPage`; each `script/[slug]` emits `SoftwareApplication`
+  (incl. an honest `interactionStatistic` view count — never fabricated ratings);
+  `game/[slug]`, `/trending` and `/discover` emit `CollectionPage`/`ItemList` via
+  the shared `collectionPageJsonLd()` helper in `lib/seo.ts`.
+- **`BreadcrumbList` comes from the `<Breadcrumbs>` component** (it emits the
+  JSON-LD by default). Only emit a breadcrumb block yourself if you pass
+  `emitJsonLd={false}` — as `script/[slug]` does, because its trail is built in
+  the server component. Two BreadcrumbLists on one page is a bug.
+- **Script pages server-render a "More <game> Scripts" strip**
+  (`getRelatedScripts()`), so each of the ~1100 script pages links onward into
+  the catalog instead of dead-ending.
 - **Per-page metadata:** server pages use `generateMetadata`. Pages whose *body*
   is a client component (`/trending`, `/discover`) carry SEO via a sibling
   `layout.tsx` `metadata` export — replicate that for any new `'use client'` route.

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getPublicScript } from '@/lib/scripts-server';
+import { getPublicScript, getRelatedScripts } from '@/lib/scripts-server';
 import { SITE_URL, SITE_NAME } from '@/lib/seo';
 import { slugify } from '@/lib/utils';
 import { ScriptDetailClient, EMPTY_REACTIONS, ScriptDetail } from './script-detail-client';
@@ -78,6 +78,7 @@ export async function generateMetadata({
 
 export default async function ScriptPage({ params }: { params: { slug: string } }) {
   const script = await getPublicScript(params.slug);
+  const related = script ? await getRelatedScripts(script.game, script.id) : [];
 
   // Structured data helps Google show a rich result for the script, plus a
   // breadcrumb trail (Home › Game › Script) for the search snippet.
@@ -137,7 +138,7 @@ export default async function ScriptPage({ params }: { params: { slug: string } 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
-      <ScriptDetailClient slug={params.slug} initialScript={initialScript} />
+      <ScriptDetailClient slug={params.slug} initialScript={initialScript} initialRelated={related} />
     </>
   );
 }

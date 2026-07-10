@@ -54,9 +54,12 @@ function getAnonId() {
 export function ScriptDetailClient({
   slug,
   initialScript,
+  initialRelated = [],
 }: {
   slug: string;
   initialScript: ScriptDetail | null;
+  /** Same-game scripts, server-rendered so the links are in the HTML. */
+  initialRelated?: HubScript[];
 }) {
   const [script, setScript] = useState<ScriptDetail | null>(initialScript);
   const [loading, setLoading] = useState(!initialScript);
@@ -68,7 +71,7 @@ export function ScriptDetailClient({
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentBody, setCommentBody] = useState('');
   const [posting, setPosting] = useState(false);
-  const [others, setOthers] = useState<HubScript[]>([]);
+  const [others, setOthers] = useState<HubScript[]>(initialRelated);
   const [loggedIn, setLoggedIn] = useState(false);
   const { user } = useAuth();
   const canModerate = user?.role === 'ADMIN' || user?.role === 'OWNER';
@@ -83,6 +86,8 @@ export function ScriptDetailClient({
     return h;
   }, []);
 
+  const hasInitialRelated = initialRelated.length > 0;
+
   useEffect(() => {
     setLoggedIn(!!token());
     const anon = getAnonId();
@@ -90,20 +95,25 @@ export function ScriptDetailClient({
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data: ScriptDetail) => {
         setScript(data);
-        // Load comments + related scripts once we know the script id.
+        // Comments are per-visit, so always load them.
         fetch(`/api/scripts/${data.id}/comments`)
           .then((r) => (r.ok ? r.json() : []))
           .then((list: Comment[]) => setComments(list));
-        fetch(`/api/scripts/catalog?game=${encodeURIComponent(data.game)}&limit=8`)
-          .then((r) => (r.ok ? r.json() : []))
-          .then((list: HubScript[]) => setOthers(list.filter((s) => s.id !== data.id).slice(0, 8)));
+        // Related scripts normally arrive server-rendered; only fetch them if
+        // the server had none (e.g. this page was cached before the script
+        // existed), so the common path costs no extra request.
+        if (!hasInitialRelated) {
+          fetch(`/api/scripts/catalog?game=${encodeURIComponent(data.game)}&limit=8`)
+            .then((r) => (r.ok ? r.json() : []))
+            .then((list: HubScript[]) => setOthers(list.filter((s) => s.id !== data.id).slice(0, 8)));
+        }
       })
       .catch(() => {
         // Only treat as "not found" when we had no server-provided script.
         if (!initialScript) setNotFound(true);
       })
       .finally(() => setLoading(false));
-  }, [slug, authHeaders, initialScript]);
+  }, [slug, authHeaders, initialScript, hasInitialRelated]);
 
   const react = async (kind: 'like' | 'dislike' | 'favorite') => {
     if (!script) return;
@@ -425,10 +435,25 @@ export function ScriptDetailClient({
               </CardContent>
             </Card>
 
-            {/* Other scripts */}
-            {others.length > 0 && (
+            {/* Related scripts — same game, keeps readers (and crawlers) moving
+                deeper into the catalog instead of dead-ending here. */}
+            {others.length > 0 && script && (
               <div className="mt-8">
-                <h2 className="text-2xl font-bold text-foreground mb-4">Other Scripts</h2>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-2xl font-bold text-foreground">
+                    {script.game && script.game !== 'Universal'
+                      ? `More ${script.game} Scripts`
+                      : 'More Scripts'}
+                  </h2>
+                  {script.game && script.game !== 'Universal' && (
+                    <Link
+                      href={`/game/${slugify(script.game)}`}
+                      className="text-sm font-medium text-red-400 transition-colors hover:text-red-300"
+                    >
+                      View all {script.game} scripts →
+                    </Link>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {others.map((s) => (
                     <ScriptHubCard key={s.id} script={s} />
