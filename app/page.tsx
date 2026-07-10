@@ -125,6 +125,7 @@ export default function HomePage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder='Try "Blox Fruits"'
+              aria-label="Search scripts"
               className="pl-12 h-14 text-base bg-card border-border"
             />
           </div>

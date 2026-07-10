@@ -33,13 +33,13 @@ export function SiteHeader({ active }: { active?: string }) {
               isActive ? 'text-red-400' : 'text-muted-foreground hover:text-foreground'
             }`;
             return item.external ? (
-              <a key={item.href} href={item.href} className={cls}>
-                <item.icon className="h-4 w-4" />
+              <a key={item.href} href={item.href} className={cls} aria-label={item.label}>
+                <item.icon className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">{item.label}</span>
               </a>
             ) : (
-              <Link key={item.href} href={item.href} className={cls}>
-                <item.icon className="h-4 w-4" />
+              <Link key={item.href} href={item.href} className={cls} aria-label={item.label}>
+                <item.icon className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">{item.label}</span>
               </Link>
             );
@@ -48,8 +48,8 @@ export function SiteHeader({ active }: { active?: string }) {
 
         <div className="flex items-center gap-2 shrink-0">
           <Link href="/get-key">
-            <Button variant="outline" size="sm" className="border-red-900/30 text-red-400 hover:bg-red-500/10 hover:text-red-300">
-              <Key className="mr-1.5 h-3.5 w-3.5" />
+            <Button variant="outline" size="sm" aria-label="Get Key" className="border-red-900/30 text-red-400 hover:bg-red-500/10 hover:text-red-300">
+              <Key className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
               <span className="hidden sm:inline">Get Key</span>
             </Button>
           </Link>
@@ -58,8 +58,8 @@ export function SiteHeader({ active }: { active?: string }) {
               is still resolving to avoid a Sign-In → Dashboard flicker). */}
           {loading ? null : user ? (
             <Link href={dashboardHref}>
-              <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">
-                <LayoutDashboard className="mr-1.5 h-3.5 w-3.5" />
+              <Button size="sm" aria-label="Dashboard" className="bg-red-600 hover:bg-red-700 text-white">
+                <LayoutDashboard className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
                 <span className="hidden sm:inline">Dashboard</span>
               </Button>
             </Link>

@@ -123,6 +123,7 @@ export default function DiscoverPage() {
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder='Search scripts or games — e.g. "Blox Fruits"'
+              aria-label="Search scripts or games"
               className="pl-12 h-12 bg-card border-border"
             />
           </div>
