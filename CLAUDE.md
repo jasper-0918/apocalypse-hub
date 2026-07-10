@@ -145,6 +145,9 @@ scripts/                 one-off node tooling (sync-scriptblox.mjs bulk importer
   — replicate this pattern for any new `'use client'` route that needs indexing.
 - **Homepage search is URL-synced** (`?search=` ↔ debounced input via
   `history.replaceState`), so searches are shareable and back the `SearchAction`.
+- **Loading uses skeleton grids, not spinners** — `ScriptGridSkeleton` /
+  `ScriptCardSkeleton` in `components/script-hub-card.tsx` match the real grid so
+  Home/Discover/Trending don't shift layout when cards arrive (better CLS).
 - `lib/indexnow.ts` — `pingIndexNow()`; key file at
   `public/apocd879a9e5cadf4f4984b64663d5bc507c2bc05373.txt`.
 - `app/not-found.tsx` — branded 404 (correct HTTP 404, not a soft-404) that

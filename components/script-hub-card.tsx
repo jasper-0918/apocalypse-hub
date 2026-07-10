@@ -70,6 +70,32 @@ export function RobloxEmblem({ className = 'h-9 w-9' }: { className?: string }) 
   );
 }
 
+/** Placeholder card matching ScriptHubCard's footprint. Rendered while the grid
+ *  loads so the layout doesn't shift when real cards arrive (better CLS). */
+export function ScriptCardSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className="aspect-video w-full animate-pulse bg-secondary" />
+      <div className="space-y-2 p-3">
+        <div className="h-3 w-20 animate-pulse rounded bg-secondary" />
+        <div className="h-4 w-3/4 animate-pulse rounded bg-secondary" />
+        <div className="h-3 w-1/3 animate-pulse rounded bg-secondary" />
+      </div>
+    </div>
+  );
+}
+
+/** A full grid of skeleton cards, same columns/gap as the real script grids. */
+export function ScriptGridSkeleton({ count = 8 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <ScriptCardSkeleton key={i} />
+      ))}
+    </div>
+  );
+}
+
 export function ScriptHubCard({ script }: { script: HubScript }) {
   const [imgOk, setImgOk] = useState(true);
   const showImage = !!script.thumbnail_url && imgOk;

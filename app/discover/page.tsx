@@ -5,9 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SiteHeader } from '@/components/site-header';
-import { ScriptHubCard, HubScript } from '@/components/script-hub-card';
+import { ScriptHubCard, HubScript, ScriptGridSkeleton } from '@/components/script-hub-card';
 import { ListPager } from '@/components/list-pager';
-import { Compass, Search, Loader2, TrendingUp, Clock, Eye } from 'lucide-react';
+import { Compass, Search, TrendingUp, Clock, Eye } from 'lucide-react';
 
 const DEFAULT_SIZE = 48;
 
@@ -147,9 +147,7 @@ export default function DiscoverPage() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-red-500" />
-          </div>
+          <ScriptGridSkeleton count={DEFAULT_SIZE > 12 ? 12 : DEFAULT_SIZE} />
         ) : scripts.length === 0 ? (
           <Card className="bg-card border-border">
             <CardContent className="flex flex-col items-center justify-center py-20 text-center">

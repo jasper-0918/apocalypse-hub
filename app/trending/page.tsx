@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SiteHeader } from '@/components/site-header';
-import { ScriptHubCard, HubScript } from '@/components/script-hub-card';
-import { TrendingUp, Loader2, Eye } from 'lucide-react';
+import { ScriptHubCard, HubScript, ScriptGridSkeleton } from '@/components/script-hub-card';
+import { TrendingUp, Eye } from 'lucide-react';
 import Link from 'next/link';
 
 export default function TrendingPage() {
@@ -32,9 +32,7 @@ export default function TrendingPage() {
         <p className="text-muted-foreground mb-6">The most-viewed scripts on Apocalypse Blox Hub right now.</p>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-red-500" />
-          </div>
+          <ScriptGridSkeleton count={8} />
         ) : scripts.length === 0 ? (
           <Card className="bg-card border-border">
             <CardContent className="flex flex-col items-center justify-center py-20 text-center">
