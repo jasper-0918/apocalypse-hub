@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
+import { cachedJson } from '@/lib/http';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,5 +52,7 @@ export async function GET(req: NextRequest) {
     owner_username: s.users?.username || 'Unknown',
   }));
 
-  return NextResponse.json(formatted);
+  // Cache at the edge: the public catalog changes at most every import cycle,
+  // so a short shared cache spares Supabase the repeated homepage/game reads.
+  return cachedJson(formatted);
 }

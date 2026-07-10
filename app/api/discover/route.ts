@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { IMPORT_SOURCE } from '@/lib/import-scripts';
+import { cachedJson } from '@/lib/http';
 
 // Public: the imported community catalog (scripts brought in from ScriptBlox).
 // These are real, published, key-gated scripts, so cards link to /script/<slug>
@@ -49,5 +50,5 @@ export async function GET(req: NextRequest) {
     owner_username: s.users?.username || undefined,
   }));
 
-  return NextResponse.json({ scripts, total: count ?? scripts.length });
+  return cachedJson({ scripts, total: count ?? scripts.length });
 }
