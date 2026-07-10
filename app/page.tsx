@@ -251,8 +251,8 @@ export default function HomePage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {scripts.map((script) => (
-              <ScriptHubCard key={script.id} script={script} />
+            {scripts.map((script, i) => (
+              <ScriptHubCard key={script.id} script={script} priority={i < 4} />
             ))}
           </div>
         )}

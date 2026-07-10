@@ -113,8 +113,8 @@ export default async function GamePage({ params }: { params: { slug: string } })
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {scripts.map((s) => (
-              <ScriptHubCard key={s.id} script={s} />
+            {scripts.map((s, i) => (
+              <ScriptHubCard key={s.id} script={s} priority={i < 4} />
             ))}
           </div>
         )}

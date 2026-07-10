@@ -53,7 +53,7 @@ export default function TrendingPage() {
                 <span className="absolute -left-1 -top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white shadow">
                   {i + 1}
                 </span>
-                <ScriptHubCard script={script} />
+                <ScriptHubCard script={script} priority={i < 4} />
               </div>
             ))}
           </div>

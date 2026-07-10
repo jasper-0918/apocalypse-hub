@@ -96,7 +96,9 @@ export function ScriptGridSkeleton({ count = 8 }: { count?: number }) {
   );
 }
 
-export function ScriptHubCard({ script }: { script: HubScript }) {
+/** `priority` = this card is above the fold. Lazy-loading the LCP image delays
+ *  it badly, so the first row opts out of lazy loading. */
+export function ScriptHubCard({ script, priority = false }: { script: HubScript; priority?: boolean }) {
   const [imgOk, setImgOk] = useState(true);
   const showImage = !!script.thumbnail_url && imgOk;
 
@@ -112,7 +114,8 @@ export function ScriptHubCard({ script }: { script: HubScript }) {
           <img
             src={script.thumbnail_url as string}
             alt={script.name}
-            loading="lazy"
+            loading={priority ? 'eager' : 'lazy'}
+            decoding="async"
             onError={() => setImgOk(false)}
             className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-105"
           />

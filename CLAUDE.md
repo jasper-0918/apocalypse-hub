@@ -149,6 +149,9 @@ scripts/                 one-off node tooling (sync-scriptblox.mjs bulk importer
 - **Loading uses skeleton grids, not spinners** — `ScriptGridSkeleton` /
   `ScriptCardSkeleton` in `components/script-hub-card.tsx` match the real grid so
   Home/Discover/Trending don't shift layout when cards arrive (better CLS).
+- **LCP:** thumbnails come from `tr.rbxcdn.com` (preconnected in `app/layout.tsx`).
+  Pass `priority` to the first 4 `ScriptHubCard`s in any grid so the above-the-fold
+  images aren't lazy-loaded. Don't use `fetchPriority` — React 18.2 warns on it.
 - `lib/indexnow.ts` — `pingIndexNow()`; key file at
   `public/apocd879a9e5cadf4f4984b64663d5bc507c2bc05373.txt`.
 - `app/not-found.tsx` — branded 404 (correct HTTP 404, not a soft-404) that

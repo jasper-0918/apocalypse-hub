@@ -96,6 +96,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
+      <head>
+        {/* Every script thumbnail is served from the Roblox CDN, so warm the
+            DNS/TLS connection before the first card image is requested (LCP). */}
+        <link rel="preconnect" href="https://tr.rbxcdn.com" />
+        <link rel="dns-prefetch" href="https://tr.rbxcdn.com" />
+      </head>
       <body className={`${inter.className} bg-background text-foreground antialiased`}>
         <script
           type="application/ld+json"
