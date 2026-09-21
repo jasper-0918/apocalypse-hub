@@ -10,11 +10,13 @@ import { Loader2, FileCode2, Shield, Search, Trash2, ExternalLink } from 'lucide
 import { ScriptbloxSyncPanel } from '@/components/scriptblox-sync-panel';
 import { useListSearch } from '@/hooks/use-list-search';
 import { ListPager } from '@/components/list-pager';
+import { Notice, useNotice, errorTextFrom } from '@/components/notice';
 
 export default function AdminScriptsPage() {
   const [scripts, setScripts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const { notice, ok, err, clear } = useNotice();
 
   useEffect(() => {
     const fetchScripts = async () => {
@@ -25,12 +27,14 @@ export default function AdminScriptsPage() {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) setScripts(await res.json());
+        else err(await errorTextFrom(res, 'Could not load scripts.'));
       } catch {
-        // Silently fail
+        err('Could not load scripts. Check your connection.');
       }
       setLoading(false);
     };
     fetchScripts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const deleteScript = async (id: string, name: string) => {
@@ -38,14 +42,20 @@ export default function AdminScriptsPage() {
     const token = localStorage.getItem('ah_session');
     if (!token) return;
     setBusyId(id);
+    clear();
     try {
       const res = await fetch(`/api/scripts/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) setScripts((prev) => prev.filter((s) => s.id !== id));
+      if (res.ok) {
+        setScripts((prev) => prev.filter((s) => s.id !== id));
+        ok(`Deleted "${name}".`);
+      } else {
+        err(await errorTextFrom(res, `Could not delete "${name}".`));
+      }
     } catch {
-      // Silently fail
+      err(`Could not delete "${name}". Check your connection.`);
     }
     setBusyId(null);
   };
@@ -78,6 +88,8 @@ export default function AdminScriptsPage() {
           className="pl-9 bg-secondary border-border"
         />
       </div>
+
+      <Notice notice={notice} />
 
       {loading ? (
         <div className="flex items-center justify-center py-20">

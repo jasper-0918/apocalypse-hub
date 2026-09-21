@@ -8,6 +8,9 @@
 # testing
 /coverage
 
+# local audit and scratch scripts, never part of a deploy
+/.scratch
+
 # next.js
 /.next/
 /out/
