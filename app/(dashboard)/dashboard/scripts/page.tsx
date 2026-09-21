@@ -10,9 +10,11 @@ import Link from 'next/link';
 import { PAID_PLANS } from '@/lib/plans';
 import { useListSearch } from '@/hooks/use-list-search';
 import { ListPager } from '@/components/list-pager';
+import { Notice, useNotice, errorTextFrom } from '@/components/notice';
 
 export default function ScriptsPage() {
   const { user } = useAuth();
+  const { notice, ok, err, clear } = useNotice();
   const [scripts, setScripts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [keyParam, setKeyParam] = useState<string | undefined>(undefined);
@@ -42,13 +44,16 @@ export default function ScriptsPage() {
         if (res.ok) {
           const data = await res.json();
           setScripts(data);
+        } else {
+          err(await errorTextFrom(res, 'Could not load your scripts.'));
         }
       } catch {
-        // Silently fail
+        err('Could not load your scripts. Check your connection.');
       }
       setLoading(false);
     };
     fetchScripts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -61,9 +66,12 @@ export default function ScriptsPage() {
       });
       if (res.ok) {
         setScripts((prev) => prev.filter((s) => s.id !== id));
+        ok('Script deleted.');
+      } else {
+        err(await errorTextFrom(res, 'Could not delete that script.'));
       }
     } catch {
-      // Silently fail
+      err('Could not delete that script. Check your connection.');
     }
   };
 
@@ -80,9 +88,12 @@ export default function ScriptsPage() {
         setScripts((prev) =>
           prev.map((s) => (s.id === id ? { ...s, games, game: games[0] || s.game } : s))
         );
+        clear();
+      } else {
+        err(await errorTextFrom(res, 'Could not update the games for that script.'));
       }
     } catch {
-      // Silently fail
+      err('Could not update the games for that script. Check your connection.');
     }
   };
 
@@ -112,9 +123,12 @@ export default function ScriptsPage() {
         setScripts((prev) =>
           prev.map((s) => (s.id === id ? { ...s, is_published: published } : s))
         );
+        ok(published ? 'Script published.' : 'Script unpublished.');
+      } else {
+        err(await errorTextFrom(res, "Could not change that script's visibility."));
       }
     } catch {
-      // Silently fail
+      err("Could not change that script's visibility. Check your connection.");
     }
   };
 
@@ -132,6 +146,8 @@ export default function ScriptsPage() {
           </Button>
         </Link>
       </div>
+
+      <Notice notice={notice} />
 
       {loading ? (
         <div className="flex items-center justify-center py-20">

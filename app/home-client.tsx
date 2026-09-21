@@ -65,6 +65,9 @@ export function HomeClient({ initialScripts, initialGames, initialDiscover }: Ho
   const [search, setSearch] = useState('');
   const [debounced, setDebounced] = useState('');
   const [sort, setSort] = useState<'recent' | 'trending'>('recent');
+  // A failed search used to leave the previous results on screen with no hint
+  // that anything went wrong, which reads as "no new matches".
+  const [loadError, setLoadError] = useState<string | null>(null);
   const debTimer = useRef<ReturnType<typeof setTimeout>>();
   const [showAllGames, setShowAllGames] = useState(false);
 
@@ -120,9 +123,15 @@ export function HomeClient({ initialScripts, initialGames, initialDiscover }: Ho
         if (debounced) params.set('search', debounced);
         if (sort === 'trending') params.set('sort', 'trending');
         const res = await fetch(`/api/scripts/catalog?${params}`);
-        if (res.ok && !cancelled) setScripts(await res.json());
+        if (cancelled) return;
+        if (res.ok) {
+          setScripts(await res.json());
+          setLoadError(null);
+        } else {
+          setLoadError('Could not load scripts just now. Try again in a moment.');
+        }
       } catch {
-        // Silently fail
+        if (!cancelled) setLoadError('Could not reach the server. Check your connection.');
       }
       if (!cancelled) setLoading(false);
     };
@@ -230,6 +239,16 @@ export function HomeClient({ initialScripts, initialGames, initialDiscover }: Ho
                 </button>
               )}
             </div>
+          </div>
+        )}
+
+        {loadError && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="mb-4 rounded-md border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+          >
+            {loadError}
           </div>
         )}
 

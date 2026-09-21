@@ -8,11 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Key, CheckCircle, XCircle, Clock, Trash2, Search } from 'lucide-react';
 import { useListSearch } from '@/hooks/use-list-search';
 import { ListPager } from '@/components/list-pager';
+import { Notice, useNotice, errorTextFrom } from '@/components/notice';
 
 export default function AdminKeysPage() {
   const [keys, setKeys] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const { notice, ok, err, clear } = useNotice();
 
   useEffect(() => {
     const fetchKeys = async () => {
@@ -23,12 +25,14 @@ export default function AdminKeysPage() {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) setKeys(await res.json());
+        else err(await errorTextFrom(res, 'Could not load keys.'));
       } catch {
-        // Silently fail
+        err('Could not load keys. Check your connection.');
       }
       setLoading(false);
     };
     fetchKeys();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const revokeKey = async (id: string, value: string) => {
@@ -36,14 +40,20 @@ export default function AdminKeysPage() {
     const token = localStorage.getItem('ah_session');
     if (!token) return;
     setBusyId(id);
+    clear();
     try {
       const res = await fetch(`/api/admin/keys/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) setKeys((prev) => prev.filter((k) => k.id !== id));
+      if (res.ok) {
+        setKeys((prev) => prev.filter((k) => k.id !== id));
+        ok(`Revoked key ${value}.`);
+      } else {
+        err(await errorTextFrom(res, 'Could not revoke that key.'));
+      }
     } catch {
-      // Silently fail
+      err('Could not revoke that key. Check your connection.');
     }
     setBusyId(null);
   };
@@ -80,6 +90,8 @@ export default function AdminKeysPage() {
           className="pl-9 bg-secondary border-border"
         />
       </div>
+
+      <Notice notice={notice} />
 
       {loading ? (
         <div className="flex items-center justify-center py-12">

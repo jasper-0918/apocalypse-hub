@@ -26,9 +26,14 @@ export default function AdminUsersPage() {
         const res = await fetch('/api/admin/users', {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (res.ok) setUsers(await res.json());
+        if (res.ok) {
+          setUsers(await res.json());
+        } else {
+          const data = await res.json().catch(() => ({}));
+          setNotice({ text: data.error || 'Could not load users.', kind: 'err' });
+        }
       } catch {
-        // Silently fail
+        setNotice({ text: 'Could not load users. Check your connection.', kind: 'err' });
       }
       setLoading(false);
     };
@@ -39,6 +44,9 @@ export default function AdminUsersPage() {
     const token = localStorage.getItem('ah_session');
     if (!token) return;
     const newRole = currentRole === 'ADMIN' ? 'USER' : 'ADMIN';
+    const name = users.find((x) => x.id === userId)?.username || 'That user';
+    setBusyId(userId);
+    setNotice(null);
     try {
       const res = await fetch(`/api/admin/users/${userId}/role`, {
         method: 'PATCH',
@@ -48,14 +56,27 @@ export default function AdminUsersPage() {
         },
         body: JSON.stringify({ role: newRole }),
       });
+      // The API refuses some role changes on purpose (only an OWNER may change
+      // a staff account). Swallowing that made the button look broken.
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setUsers((prev) =>
           prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
         );
+        setNotice({
+          text:
+            newRole === 'ADMIN'
+              ? `${name} is now an admin.`
+              : `${name} is no longer an admin.`,
+          kind: 'ok',
+        });
+      } else {
+        setNotice({ text: data.error || 'Could not change that role.', kind: 'err' });
       }
     } catch {
-      // Silently fail
+      setNotice({ text: 'Could not change that role. Check your connection.', kind: 'err' });
     }
+    setBusyId(null);
   };
 
   const handleResend = async (u: any) => {

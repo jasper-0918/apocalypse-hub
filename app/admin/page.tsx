@@ -6,9 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Users, FileCode2, Key, Activity, Loader2, Sparkles, Globe } from 'lucide-react';
+import { Notice, useNotice, errorTextFrom } from '@/components/notice';
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
+  const { notice, err } = useNotice();
   const [stats, setStats] = useState({ users: 0, scripts: 0, keys: 0, activeKeys: 0 });
   const [loading, setLoading] = useState(true);
   const [recentUsers, setRecentUsers] = useState<any[]>([]);
@@ -49,12 +51,17 @@ export default function AdminDashboardPage() {
         ]);
         if (statsRes.ok) setStats(await statsRes.json());
         if (usersRes.ok) setRecentUsers((await usersRes.json()));
+        // Zeroes across the dashboard used to be indistinguishable from a
+        // failed request, so say which half did not load.
+        if (!statsRes.ok) err(await errorTextFrom(statsRes, 'Could not load the stats.'));
+        else if (!usersRes.ok) err(await errorTextFrom(usersRes, 'Could not load recent users.'));
       } catch {
-        // Silently fail
+        err('Could not load the dashboard. Check your connection.');
       }
       setLoading(false);
     };
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) {
@@ -68,6 +75,8 @@ export default function AdminDashboardPage() {
   return (
     <div className="p-8 max-w-6xl">
       <h1 className="text-3xl font-bold text-foreground mb-8">Admin Dashboard</h1>
+
+      <Notice notice={notice} />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
         {[
