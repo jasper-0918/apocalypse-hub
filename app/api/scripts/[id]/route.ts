@@ -1,11 +1,25 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { getUserFromRequest } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
 import { slugify } from '@/lib/utils';
 import { pingIndexNow } from '@/lib/indexnow';
 import { isStaff } from '@/lib/plans';
 import { linkScriptToActiveKeys } from '@/lib/keys';
+
+// Public pages that show this script. Script and game pages are cached for a
+// day (ISR), so an edit or delete refreshes them here instead of waiting.
+function publicPaths(s: { id: string; slug?: string | null; game?: string | null; games?: string[] | null }): string[] {
+  const gList = Array.isArray(s.games) && s.games.length ? s.games : [s.game || 'Universal'];
+  const paths = ['/', `/script/${s.slug || s.id}`];
+  for (const g of gList) if (g) paths.push(`/game/${slugify(String(g))}`);
+  return paths;
+}
+
+function revalidateAll(paths: string[]) {
+  Array.from(new Set(paths)).forEach((p) => revalidatePath(p));
+}
 
 export async function DELETE(
   req: NextRequest,
@@ -18,7 +32,7 @@ export async function DELETE(
 
   const { data: script } = await supabase
     .from('scripts')
-    .select('owner_id')
+    .select('id, owner_id, slug, game, games')
     .eq('id', params.id)
     .single();
 
@@ -31,6 +45,7 @@ export async function DELETE(
   }
 
   await supabase.from('scripts').delete().eq('id', params.id);
+  revalidateAll(publicPaths(script as any));
 
   return NextResponse.json({ success: true });
 }
@@ -46,7 +61,7 @@ export async function PATCH(
 
   const { data: script } = await supabase
     .from('scripts')
-    .select('owner_id')
+    .select('id, owner_id, slug, game, games')
     .eq('id', params.id)
     .single();
 
@@ -85,6 +100,9 @@ export async function PATCH(
       .eq('id', params.id)
       .select()
       .single();
+
+    // Old and new pages both: a game change moves the script between listings.
+    if (updated) revalidateAll(publicPaths(script as any).concat(publicPaths(updated)));
 
     // When publishing, link every active key to this script (paged + bulk).
     if (body.isPublished === true) {
