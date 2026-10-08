@@ -7,9 +7,12 @@ import { ScriptDetailClient, EMPTY_REACTIONS, ScriptDetail } from './script-deta
 // ISR, not force-dynamic: this page's server render is side-effect free (see
 // getPublicScript — it never increments views; the client's call to
 // /api/scripts/public/[slug] does that on every visit). Caching the HTML for a
-// few minutes cuts TTFB on our most-indexed pages and spares Supabase a query
-// per visitor. Fresh data still lands client-side immediately after hydration.
-export const revalidate = 300;
+// day cuts TTFB on our most-indexed pages and spares Supabase a query per
+// visitor. Fresh data still lands client-side immediately after hydration.
+// A day, not 5 min: with 5,000+ slugs, crawler hits on stale pages were the
+// rebuilds that put the Hobby team over its Active CPU and ISR write limits
+// (Oct 2026). Edits and deletes revalidate the page on demand (api/scripts/[id]).
+export const revalidate = 86400;
 
 // Prerender nothing at build (keeps builds fast with 1000+ scripts); every slug
 // is generated on first request and then served from the cache until revalidate.

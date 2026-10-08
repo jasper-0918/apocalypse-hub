@@ -8,8 +8,9 @@ import { getScriptsByGameSlug } from '@/lib/scripts-server';
 import { SITE_URL, SITE_NAME, collectionPageJsonLd } from '@/lib/seo';
 
 // ISR, not force-dynamic — the game listing is public, read-only data. New
-// imports appear within the revalidate window.
-export const revalidate = 300;
+// imports arrive once a day (the 06:00 UTC cron), so a daily rebuild is enough;
+// edits and deletes revalidate their own game pages on demand (api/scripts/[id]).
+export const revalidate = 86400;
 
 // Generate each game page on first request, then serve it cached (see the
 // script page for why the empty array matters).

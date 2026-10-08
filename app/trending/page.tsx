@@ -10,7 +10,9 @@ import { SITE_URL, collectionPageJsonLd } from '@/lib/seo';
 // Fully server-rendered: this page has no interactivity, it just lists the
 // most-viewed scripts. Rendering it on the server puts real /script/<slug>
 // links in the HTML and removes the fetch-on-mount + loading flash.
-export const revalidate = 300;
+// Hourly, not every 5 min: on Hobby each stale hit by a crawler is a rebuild,
+// and rebuilds put the team over its Active CPU and ISR write limits (Oct 2026).
+export const revalidate = 3600;
 
 export default async function TrendingPage() {
   const scripts = await getTrendingScripts(40);

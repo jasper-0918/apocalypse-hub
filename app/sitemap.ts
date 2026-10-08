@@ -4,8 +4,8 @@ import { getGameSummaries } from '@/lib/scripts-server';
 import { selectAll } from '@/lib/paginate';
 import { SITE_URL } from '@/lib/seo';
 
-// Regenerate at most hourly so newly published scripts appear without a redeploy.
-export const revalidate = 3600;
+// Regenerate daily: imports land once a day, and IndexNow already pings new pages.
+export const revalidate = 86400;
 
 // Served at /sitemap.xml. Lists the public marketing/browse pages plus every
 // published script detail page so search engines can discover them all.

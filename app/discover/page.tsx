@@ -7,7 +7,9 @@ import { DiscoverClient } from './discover-client';
 // real /script/<slug> links; the client takes over for search/sort/paging.
 // Do NOT read searchParams here — it would make the route dynamic. The client
 // reads ?sort/?q/?page/?size after hydration and refetches when they're set.
-export const revalidate = 300;
+// Hourly, not every 5 min: on Hobby each stale hit by a crawler is a rebuild,
+// and rebuilds put the team over its Active CPU and ISR write limits (Oct 2026).
+export const revalidate = 3600;
 
 export default async function DiscoverPage() {
   const { scripts, total } = await getDiscoverInitial(DISCOVER_PAGE_SIZE);
